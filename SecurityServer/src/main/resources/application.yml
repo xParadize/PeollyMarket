@@ -1,0 +1,41 @@
+server:
+  port: 8001
+
+spring:
+  application:
+    name: Security Server
+  config:
+    import: optional:file:.env[.properties]
+  cache:
+    type: redis
+    cache-names: redis-cache
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+  datasource:
+    username: "xparadize"
+    url: jdbc:postgresql://localhost:5432/SecurityServer
+    password: "password"
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:-miiRB4WJbeujT2yipGGnqb9zwTclvPMUyxi77BoujsFfIjVOn3GQVEBwjJZZqTaP}
+    expirationMs: 604800000 # 1 week
+
+#eureka:
+#  client:
+#    service-url:
+#      defaultZone: http://localhost:8761/eureka
+#    fetch-registry: true
+#    register-with-eureka: true
+
