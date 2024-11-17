@@ -3,6 +3,8 @@ package com.peolly;
 import com.peolly.utilservice.events.SendEmailConfirmationTokenEvent;
 import com.peolly.utilservice.events.SendUserCreatedEvent;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,9 +19,13 @@ public class EmailConfirmationService {
     private final EmailConfirmationRepository emailConfirmationRepository;
     private final MailService mailService;
 
+    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
+
     @Transactional
     @KafkaListener(topics = "send-email-confirmation-token", groupId = "org-deli-queuing-email")
     public void consumeJson(SendEmailConfirmationTokenEvent emailConfirmationTokenEvent) {
+
+        LOGGER.info("Received email from topic 'send-email-confirmation-token': {}", emailConfirmationTokenEvent.getEmail());
 
         var confirmation = EmailConfirmation.builder()
                 .token(String.valueOf(emailConfirmationTokenEvent.getTempUserTokenId()))

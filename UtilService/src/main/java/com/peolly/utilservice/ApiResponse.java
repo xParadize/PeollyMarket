@@ -1,4 +1,4 @@
-package com.peolly.securityserver;
+package com.peolly.utilservice;
 
 import java.time.LocalDateTime;
 

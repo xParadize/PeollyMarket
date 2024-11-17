@@ -30,7 +30,7 @@ public class KafkaConsumerConfiguration {
     @Value("${spring.kafka.consumer.key-deserializer}")
     private String keyDeserializer;
 
-    @Value("${spring.kafka.consumer.value-deserializer}")
+    @Value("    ${spring.kafka.consumer.value-deserializer}")
     private String valueDeserializer;
 
     @Value("${spring.kafka.consumer.group-id}")

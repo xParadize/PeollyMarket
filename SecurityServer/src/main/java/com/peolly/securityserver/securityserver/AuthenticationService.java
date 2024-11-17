@@ -54,7 +54,6 @@ public class AuthenticationService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .build();
-
         tempUserService.create(tempUser);
     }
 
@@ -154,11 +153,9 @@ public class AuthenticationService {
                 token,
                 registeredUserData
         );
-
         SendResult<String, SendUserCreatedEvent> result = sendUserCreatedEmailEvent
                 .send(record).get();
-
-        LOGGER.info("Sent event: {}", result);
+        LOGGER.info("Sent event to topic 'send-user-created-email': {}", result);
 
         JwtAuthenticationResponse response = enableUser(temporaryUser);
 
