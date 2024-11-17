@@ -1,6 +1,6 @@
 package com.peolly.securityserver.usermicroservice.controllers;
 
-import com.peolly.securityserver.ApiResponse;
+import com.peolly.utilservice.ApiResponse;
 import com.peolly.securityserver.usermicroservice.model.CardData;
 import com.peolly.securityserver.usermicroservice.model.User;
 import com.peolly.securityserver.usermicroservice.services.UserService;
