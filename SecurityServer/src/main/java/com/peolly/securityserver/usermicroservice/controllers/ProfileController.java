@@ -106,7 +106,7 @@ public class ProfileController {
         }
     }
 
-    @KafkaListener(topics = "send-was-payment-method-added", groupId = "org-deli-queuing-payment")
+    @KafkaListener(topics = "send-was-payment-method-added", groupId = "org-deli-queuing-security")
     public void consumeSendWasPaymentMethodAdded(WasPaymentMethodAddedEvent wasPaymentMethodAddedEvent) {
         CompletableFuture<Boolean> future = kafkaListenerFutureWaiter.getPaymentMethodFuture();
         if (future != null) {
