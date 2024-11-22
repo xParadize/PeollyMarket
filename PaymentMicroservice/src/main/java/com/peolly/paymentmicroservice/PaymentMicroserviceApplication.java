@@ -1,11 +1,11 @@
-package com.peolly.securityserver;
+package com.peolly.paymentmicroservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class SecurityServerApplication {
+public class PaymentMicroserviceApplication {
     public static void main(String[] args) {
-        SpringApplication.run(SecurityServerApplication.class, args);
+        SpringApplication.run(PaymentMicroserviceApplication.class, args);
     }
 }
