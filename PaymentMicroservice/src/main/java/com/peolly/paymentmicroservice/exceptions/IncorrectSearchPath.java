@@ -1,4 +1,4 @@
-package com.peolly.utilservice.exceptions;
+package com.peolly.paymentmicroservice.exceptions;
 
 public class IncorrectSearchPath extends RuntimeException {
 }

@@ -1,16 +1,14 @@
 package com.peolly.securityserver.usermicroservice.controllers;
 
-import com.peolly.securityserver.kafka.KafkaListenerFutureWaiter;
-import com.peolly.securityserver.usermicroservice.exceptions.NoCreditCardLinkedException;
 import com.peolly.securityserver.dto.CardData;
+import com.peolly.securityserver.dto.DeleteCardDto;
+import com.peolly.securityserver.kafka.KafkaListenerFutureWaiter;
+import com.peolly.securityserver.usermicroservice.exceptions.IncorrectSearchPath;
+import com.peolly.securityserver.usermicroservice.exceptions.NoCreditCardLinkedException;
 import com.peolly.securityserver.usermicroservice.model.User;
 import com.peolly.securityserver.usermicroservice.services.UserService;
 import com.peolly.utilservice.ApiResponse;
-import com.peolly.utilservice.events.SavePaymentMethodEvent;
-import com.peolly.utilservice.events.SendGetAllPaymentMethods;
-import com.peolly.utilservice.events.SendUserIdEvent;
-import com.peolly.utilservice.events.WasPaymentMethodAddedEvent;
-import com.peolly.utilservice.exceptions.IncorrectSearchPath;
+import com.peolly.utilservice.events.*;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -47,6 +45,7 @@ public class ProfileController {
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
     private final KafkaTemplate<String, SavePaymentMethodEvent> sendSavePaymentMethodEvent;
     private final KafkaTemplate<String, SendUserIdEvent> sendUserIdEvent;
+    private final KafkaTemplate<String, SendDeletePaymentMethodEvent> sendDeletePaymentMethodEvent;
 
     @Hidden
     @RequestMapping(value = "/**")
@@ -122,7 +121,7 @@ public class ProfileController {
         LOGGER.info("Sent event: {}", result);
 
         CompletableFuture<Boolean> future = new CompletableFuture<>();
-        kafkaListenerFutureWaiter.setPaymentMethodFuture(future);
+        kafkaListenerFutureWaiter.setWasPaymentMethodAddedFuture(future);
 
         boolean isCardDataValid = future.get();
         if (isCardDataValid) {
@@ -134,28 +133,53 @@ public class ProfileController {
 
     @KafkaListener(topics = "send-was-payment-method-added", groupId = "org-deli-queuing-security")
     public void consumeSendWasPaymentMethodAdded(WasPaymentMethodAddedEvent wasPaymentMethodAddedEvent) {
-        CompletableFuture<Boolean> future = kafkaListenerFutureWaiter.getPaymentMethodFuture();
+        CompletableFuture<Boolean> future = kafkaListenerFutureWaiter.getWasPaymentMethodAddedFuture();
         if (future != null) {
             future.complete(wasPaymentMethodAddedEvent.isSuccessful());
         }
     }
 
-//    @Operation(summary = "There user should delete their payment method (card data)")
-//    @PostMapping("/delete-payment-method")
-//    public ResponseEntity<ApiResponse> deletePaymentMethod(@RequestBody PaymentMethodDto dto, Principal actualUser) {
-//
-//        User requestUser = usersService.findByUsername(actualUser.getName());
-//        UUID userId = requestUser.getId();
-//
-//        Card userCard = cardService.getUserCardByCardNumber(dto.getCardNumber());
-//
-//        if (userCard != null && userCard.getUserId().equals(userId)) {
-//            cardService.deletePaymentMethod(dto.getCardNumber());
-//            return new ResponseEntity<>(new ApiResponse(true, "Payment method deleted"), HttpStatus.OK);
-//        }
-//
-//        return new ResponseEntity<>(new ApiResponse(false, "Incorrect card data or this card doesn't belong to user"), HttpStatus.BAD_REQUEST);
-//    }
+    @Operation(summary = "There user should delete their payment method (card data)")
+    @DeleteMapping("/delete-payment-method")
+    public ResponseEntity<ApiResponse> deletePaymentMethod(@RequestBody DeleteCardDto deleteCardDto, Principal actualUser) throws ExecutionException, InterruptedException {
+
+        User requestUser = usersService.findByUsername(actualUser.getName());
+
+        SendDeletePaymentMethodEvent deletePaymentMethodEvent = new SendDeletePaymentMethodEvent(
+                requestUser.getId(),
+                deleteCardDto.cardNumber()
+        );
+
+        ProducerRecord<String, SendDeletePaymentMethodEvent> record = new ProducerRecord<>(
+                "send-delete-payment-method",
+                "userId",
+                deletePaymentMethodEvent
+        );
+
+        SendResult<String, SendDeletePaymentMethodEvent> result = sendDeletePaymentMethodEvent
+                .send(record).get();
+
+        LOGGER.info("Sent event: {}", result);
+
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
+        kafkaListenerFutureWaiter.setWasPaymentMethodDeletedFuture(future);
+
+        boolean paymentMethodDeleted = future.get();
+
+        if (paymentMethodDeleted) {
+            return new ResponseEntity<>(new ApiResponse(true, "Payment method deleted"), HttpStatus.NO_CONTENT);
+        } else {
+            return new ResponseEntity<>(new ApiResponse(false, "Incorrect card data or this card doesn't belong to user"), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @KafkaListener(topics = "send-was-payment-method-deleted", groupId = "org-deli-queuing-payment")
+    public void consumeSendWasPaymentMethodDeleted(WasPaymentMethodDeletedEvent wasPaymentMethodDeletedEvent) {
+        CompletableFuture<Boolean> future = kafkaListenerFutureWaiter.getWasPaymentMethodDeletedFuture();
+        if (future != null) {
+            future.complete(wasPaymentMethodDeletedEvent.success());
+        }
+    }
 //
 //    @GetMapping("/check/{check_id}")
 //    public ResponseEntity<Resource> downloadCheck(@PathVariable("check_id") String checkId) {

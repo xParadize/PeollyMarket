@@ -11,6 +11,7 @@ import java.util.concurrent.CompletableFuture;
 @Setter
 @Service
 public class KafkaListenerFutureWaiter {
-    private CompletableFuture<Boolean> paymentMethodFuture;
+    private CompletableFuture<Boolean> wasPaymentMethodAddedFuture;
     private CompletableFuture<List<String>> allPaymentMethodsFuture;
+    private CompletableFuture<Boolean> wasPaymentMethodDeletedFuture;
 }
