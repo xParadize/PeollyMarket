@@ -1,11 +1,14 @@
 package com.peolly.securityserver.usermicroservice.controllers;
 
-import com.peolly.utilservice.ApiResponse;
-import com.peolly.securityserver.usermicroservice.model.CardData;
+import com.peolly.securityserver.kafka.KafkaListenerFutureWaiter;
+import com.peolly.securityserver.usermicroservice.exceptions.NoCreditCardLinkedException;
+import com.peolly.securityserver.dto.CardData;
 import com.peolly.securityserver.usermicroservice.model.User;
 import com.peolly.securityserver.usermicroservice.services.UserService;
-import com.peolly.securityserver.kafka.KafkaListenerFutureWaiter;
+import com.peolly.utilservice.ApiResponse;
 import com.peolly.utilservice.events.SavePaymentMethodEvent;
+import com.peolly.utilservice.events.SendGetAllPaymentMethods;
+import com.peolly.utilservice.events.SendUserIdEvent;
 import com.peolly.utilservice.events.WasPaymentMethodAddedEvent;
 import com.peolly.utilservice.exceptions.IncorrectSearchPath;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -20,12 +23,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -38,7 +39,6 @@ public class ProfileController {
 
     private final UserService usersService;
     private final KafkaListenerFutureWaiter kafkaListenerFutureWaiter;
-//    private final CardService cardService;
 //    private final EcheckService echeckService;
 //    private final UncheckedCardService uncheckedCardService;
 //    private final NotificationService notificationService;
@@ -46,6 +46,7 @@ public class ProfileController {
 
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
     private final KafkaTemplate<String, SavePaymentMethodEvent> sendSavePaymentMethodEvent;
+    private final KafkaTemplate<String, SendUserIdEvent> sendUserIdEvent;
 
     @Hidden
     @RequestMapping(value = "/**")
@@ -60,13 +61,38 @@ public class ProfileController {
 //        return collectUserInfoService.getAllUserInfo(requestedUser);
 //    }
 
-//    @GetMapping("/payment-methods")
-//    public ResponseEntity<List<PaymentMethodDto>> getAllPaymentMethods(Principal actualUser) {
-//        User requestUser = usersService.findByUsername(actualUser.getName());
-//        UUID userId = requestUser.getId();
-//        List<PaymentMethodDto> paymentMethodsList = cardService.getAllPaymentMethods(userId);
-//        return new ResponseEntity<>(paymentMethodsList, HttpStatus.OK);
-//    }
+    @GetMapping("/payment-methods")
+    public ResponseEntity<List<String>> getAllPaymentMethods(Principal actualUser) throws ExecutionException, InterruptedException {
+        User requestUser = usersService.findByUsername(actualUser.getName());
+        SendUserIdEvent userIdEvent = new SendUserIdEvent(requestUser.getId());
+
+        ProducerRecord<String, SendUserIdEvent> record = new ProducerRecord<>(
+                "send-user-id-event",
+                "userId",
+                userIdEvent
+        );
+
+        SendResult<String, SendUserIdEvent> result = sendUserIdEvent
+                .send(record).get();
+
+        LOGGER.info("Sent event: {}", result);
+
+        CompletableFuture<List<String>> future = new CompletableFuture<>();
+        kafkaListenerFutureWaiter.setAllPaymentMethodsFuture(future);
+        if (kafkaListenerFutureWaiter.getAllPaymentMethodsFuture().get().isEmpty()) {
+            throw new NoCreditCardLinkedException();
+        }
+
+        return new ResponseEntity<>(future.get(), HttpStatus.OK);
+    }
+
+    @KafkaListener(topics = "send-get-all-payment-methods", groupId = "org-deli-queuing-security")
+    public void consumeGetAllPaymentMethods(SendGetAllPaymentMethods paymentMethodsEvent) {
+        CompletableFuture<List<String>> future = kafkaListenerFutureWaiter.getAllPaymentMethodsFuture();
+        if (future != null) {
+            future.complete(paymentMethodsEvent.paymentMethods());
+        }
+    }
 
     @Operation(summary = "There user should add their payment method (card data)")
     @PostMapping("/add-payment-method")

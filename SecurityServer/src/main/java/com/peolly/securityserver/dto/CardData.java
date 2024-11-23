@@ -1,4 +1,4 @@
-package com.peolly.securityserver.usermicroservice.model;
+package com.peolly.securityserver.dto;
 
 import lombok.Builder;
 import lombok.Getter;

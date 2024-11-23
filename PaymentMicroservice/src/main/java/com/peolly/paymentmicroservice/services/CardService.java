@@ -1,20 +1,37 @@
 package com.peolly.paymentmicroservice.services;
 
+import com.peolly.paymentmicroservice.NoCreditCardLinkedException;
 import com.peolly.paymentmicroservice.dto.CardDto;
+import com.peolly.paymentmicroservice.dto.PaymentMethodDto;
 import com.peolly.paymentmicroservice.enums.CardType;
 import com.peolly.paymentmicroservice.models.Card;
 import com.peolly.paymentmicroservice.repositories.CardRepository;
+import com.peolly.utilservice.events.SavePaymentMethodEvent;
+import com.peolly.utilservice.events.SendGetAllPaymentMethods;
+import com.peolly.utilservice.events.SendUserIdEvent;
 import lombok.RequiredArgsConstructor;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 @Service
 @RequiredArgsConstructor
 public class CardService {
 
     private final CardRepository cardRepository;
+
+    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
+    private final KafkaTemplate<String, SendGetAllPaymentMethods> sendGetAllPaymentMethods;
 //    private final MailService mailService;
 //    private final UserService usersService;
 //
@@ -72,20 +89,28 @@ public class CardService {
 //        cardRepository.deleteCardByCardNumber(cardNumber);
 //    }
 //
-//    @Transactional(readOnly = true)
-//    public List<PaymentMethodDto> getAllPaymentMethods(UUID userId) {
-//        List<Card> userCards = cardRepository.findAllByUserId(userId);
-////        if (userCards.isEmpty()) throw new NoCreditCardLinkedException();
-//        List<PaymentMethodDto> methodsToReturn = new ArrayList<>();
-//
-//        for (Card c : userCards) {
-//            PaymentMethodDto dtoToAdd = PaymentMethodDto.builder()
-//                    .cardNumber(c.getCardNumber())
-//                    .build();
-//            methodsToReturn.add(dtoToAdd);
-//        }
-//        return methodsToReturn;
-//    }
+    @Transactional(readOnly = true)
+    @KafkaListener(topics = "send-user-id-event", groupId = "org-deli-queuing-security")
+    public void getAllPaymentMethods(SendUserIdEvent userIdEvent) throws ExecutionException, InterruptedException {
+        List<Card> userCards = cardRepository.findAllByUserId(userIdEvent.userId());
+        List<String> methodsToReturn = new ArrayList<>();
+
+        userCards.parallelStream()
+                .forEach(card -> methodsToReturn.add(card.getCardNumber()));
+
+        SendGetAllPaymentMethods paymentMethods = new SendGetAllPaymentMethods(methodsToReturn);
+
+        ProducerRecord<String, SendGetAllPaymentMethods> record = new ProducerRecord<>(
+                "send-get-all-payment-methods",
+                "userId",
+                paymentMethods
+        );
+
+        SendResult<String, SendGetAllPaymentMethods> result = sendGetAllPaymentMethods
+                .send(record).get();
+
+        LOGGER.info("Sent event: {}", result);
+    }
 //
 //    @Transactional(readOnly = true)
 //    public boolean isCardBelongToUser(String cardNumber, UUID userId) {
