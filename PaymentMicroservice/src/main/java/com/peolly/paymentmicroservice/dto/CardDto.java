@@ -1,4 +1,4 @@
-package com.peolly.securityserver.usermicroservice.model;
+package com.peolly.paymentmicroservice.dto;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -7,7 +7,7 @@ import lombok.Setter;
 @Builder
 @Getter
 @Setter
-public class CardData {
+public class CardDto {
     private String cardNumber;
     private String monthExpiration;
     private String yearExpiration;

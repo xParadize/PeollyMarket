@@ -6,6 +6,3 @@ create table users (
                        balance numeric not null,
                        card_number varchar
 );
-
-
-

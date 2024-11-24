@@ -18,6 +18,7 @@
         <module>ConfigServer</module>
         <module>UtilService</module>
         <module>EmailMicroservice</module>
+        <module>PaymentMicroservice</module>
     </modules>
 
     <properties>
