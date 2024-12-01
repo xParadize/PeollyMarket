@@ -2,7 +2,7 @@ package com.peolly.securityserver.usermicroservice.controllers;
 
 import com.peolly.securityserver.dto.CardData;
 import com.peolly.securityserver.dto.DeleteCardDto;
-import com.peolly.securityserver.kafka.KafkaListenerFutureWaiter;
+import com.peolly.securityserver.kafka.SecurityKafkaListenerFutureWaiter;
 import com.peolly.securityserver.usermicroservice.exceptions.IncorrectSearchPath;
 import com.peolly.securityserver.usermicroservice.exceptions.NoCreditCardLinkedException;
 import com.peolly.securityserver.usermicroservice.model.User;
@@ -36,7 +36,7 @@ import java.util.concurrent.ExecutionException;
 public class ProfileController {
 
     private final UserService usersService;
-    private final KafkaListenerFutureWaiter kafkaListenerFutureWaiter;
+    private final SecurityKafkaListenerFutureWaiter securityKafkaListenerFutureWaiter;
 //    private final EcheckService echeckService;
 //    private final UncheckedCardService uncheckedCardService;
 //    private final NotificationService notificationService;
@@ -77,8 +77,8 @@ public class ProfileController {
         LOGGER.info("Sent event: {}", result);
 
         CompletableFuture<List<String>> future = new CompletableFuture<>();
-        kafkaListenerFutureWaiter.setAllPaymentMethodsFuture(future);
-        if (kafkaListenerFutureWaiter.getAllPaymentMethodsFuture().get().isEmpty()) {
+        securityKafkaListenerFutureWaiter.setAllPaymentMethodsFuture(future);
+        if (securityKafkaListenerFutureWaiter.getAllPaymentMethodsFuture().get().isEmpty()) {
             throw new NoCreditCardLinkedException();
         }
 
@@ -87,7 +87,7 @@ public class ProfileController {
 
     @KafkaListener(topics = "send-get-all-payment-methods", groupId = "org-deli-queuing-security")
     public void consumeGetAllPaymentMethods(SendGetAllPaymentMethods paymentMethodsEvent) {
-        CompletableFuture<List<String>> future = kafkaListenerFutureWaiter.getAllPaymentMethodsFuture();
+        CompletableFuture<List<String>> future = securityKafkaListenerFutureWaiter.getAllPaymentMethodsFuture();
         if (future != null) {
             future.complete(paymentMethodsEvent.paymentMethods());
         }
@@ -121,7 +121,7 @@ public class ProfileController {
         LOGGER.info("Sent event: {}", result);
 
         CompletableFuture<Boolean> future = new CompletableFuture<>();
-        kafkaListenerFutureWaiter.setWasPaymentMethodAddedFuture(future);
+        securityKafkaListenerFutureWaiter.setWasPaymentMethodAddedFuture(future);
 
         boolean isCardDataValid = future.get();
         if (isCardDataValid) {
@@ -133,7 +133,7 @@ public class ProfileController {
 
     @KafkaListener(topics = "send-was-payment-method-added", groupId = "org-deli-queuing-security")
     public void consumeSendWasPaymentMethodAdded(WasPaymentMethodAddedEvent wasPaymentMethodAddedEvent) {
-        CompletableFuture<Boolean> future = kafkaListenerFutureWaiter.getWasPaymentMethodAddedFuture();
+        CompletableFuture<Boolean> future = securityKafkaListenerFutureWaiter.getWasPaymentMethodAddedFuture();
         if (future != null) {
             future.complete(wasPaymentMethodAddedEvent.isSuccessful());
         }
@@ -162,7 +162,7 @@ public class ProfileController {
         LOGGER.info("Sent event: {}", result);
 
         CompletableFuture<Boolean> future = new CompletableFuture<>();
-        kafkaListenerFutureWaiter.setWasPaymentMethodDeletedFuture(future);
+        securityKafkaListenerFutureWaiter.setWasPaymentMethodDeletedFuture(future);
 
         boolean paymentMethodDeleted = future.get();
 
@@ -175,7 +175,7 @@ public class ProfileController {
 
     @KafkaListener(topics = "send-was-payment-method-deleted", groupId = "org-deli-queuing-payment")
     public void consumeSendWasPaymentMethodDeleted(WasPaymentMethodDeletedEvent wasPaymentMethodDeletedEvent) {
-        CompletableFuture<Boolean> future = kafkaListenerFutureWaiter.getWasPaymentMethodDeletedFuture();
+        CompletableFuture<Boolean> future = securityKafkaListenerFutureWaiter.getWasPaymentMethodDeletedFuture();
         if (future != null) {
             future.complete(wasPaymentMethodDeletedEvent.success());
         }

@@ -1,0 +1,18 @@
+server:
+  port: 8002
+
+spring:
+  application:
+    name: Company Microservice
+  datasource:
+    username: "xparadize"
+    url: jdbc:postgresql://localhost:5432/CompanyMicroservice
+    password: "password"
+    jpa:
+      properties:
+        hibernate:
+          dialect: org.hibernate.dialect.PostgreSQLDialect
+          format_sql: true
+      hibernate:
+        ddl-auto: update
+      show-sql: true

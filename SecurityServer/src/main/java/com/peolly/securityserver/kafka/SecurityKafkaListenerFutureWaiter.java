@@ -10,7 +10,7 @@ import java.util.concurrent.CompletableFuture;
 @Getter
 @Setter
 @Service
-public class KafkaListenerFutureWaiter {
+public class SecurityKafkaListenerFutureWaiter {
     private CompletableFuture<Boolean> wasPaymentMethodAddedFuture;
     private CompletableFuture<List<String>> allPaymentMethodsFuture;
     private CompletableFuture<Boolean> wasPaymentMethodDeletedFuture;

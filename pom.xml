@@ -19,6 +19,8 @@
         <module>UtilService</module>
         <module>EmailMicroservice</module>
         <module>PaymentMicroservice</module>
+        <module>ProductMicroservice</module>
+        <module>CompanyMicroservice</module>
     </modules>
 
     <properties>
