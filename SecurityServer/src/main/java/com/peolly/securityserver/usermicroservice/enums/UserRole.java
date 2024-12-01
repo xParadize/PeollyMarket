@@ -1,6 +1,6 @@
 package com.peolly.securityserver.usermicroservice.enums;
 
-public enum Role {
+public enum UserRole {
     ROLE_USER,
     ROLE_COMPANY_MANAGER,
     ROLE_ADMIN,

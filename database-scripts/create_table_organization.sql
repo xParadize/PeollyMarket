@@ -8,5 +8,3 @@ create table organization
     registrated_at timestamp    not null,
     creator_id    uuid unique not null
 );
-
-

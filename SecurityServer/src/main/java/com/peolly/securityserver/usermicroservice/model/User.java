@@ -1,6 +1,6 @@
 package com.peolly.securityserver.usermicroservice.model;
 
-import com.peolly.securityserver.usermicroservice.enums.Role;
+import com.peolly.securityserver.usermicroservice.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
@@ -49,7 +49,7 @@ public class User implements UserDetails {
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role")
     @Enumerated(EnumType.STRING)
-    private Set<Role> roles;
+    private Set<UserRole> roles;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

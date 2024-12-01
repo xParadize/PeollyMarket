@@ -2,7 +2,7 @@ package com.peolly.securityserver.securityserver;
 
 import com.peolly.securityserver.securityserver.tempregistration.TempUserService;
 import com.peolly.securityserver.securityserver.tempregistration.TemporaryUser;
-import com.peolly.securityserver.usermicroservice.enums.Role;
+import com.peolly.securityserver.usermicroservice.enums.UserRole;
 import com.peolly.securityserver.usermicroservice.model.User;
 import com.peolly.securityserver.usermicroservice.services.AuthDeviceInfoService;
 import com.peolly.securityserver.usermicroservice.services.UserService;
@@ -61,10 +61,8 @@ public class AuthenticationService {
     public JwtAuthenticationResponse enableUser(TemporaryUser temporaryUser) {
 
         User userToSave = convertTempUserToUser(temporaryUser);
-
         userService.save(userToSave);
-
-        userService.getVerificatedRole(userToSave.getId());
+        tempUserService.deleteTempUserById(temporaryUser.getId());
 
         var jwt = jwtService.generateToken(userToSave);
         var refreshToken = nameGenerator.refreshTokenGenerator(jwt);
@@ -81,8 +79,6 @@ public class AuthenticationService {
 
         refreshTokenService.saveRefreshToken(refreshTokenToSave);
 
-        tempUserService.deleteTempUserById(temporaryUser.getId());
-
         // notificationService.sendNotification(userToSave, NotificationType.REGISTRATION_NOTIFICATION);
 
         return response;
@@ -94,7 +90,7 @@ public class AuthenticationService {
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .password(request.getPassword())
-                .roles(new HashSet<>(Arrays.asList(Role.ROLE_USER, Role.ROLE_UNVERIFIED_EMAIL)))
+                .roles(new HashSet<>(Arrays.asList(UserRole.ROLE_USER, UserRole.ROLE_VERIFIED_EMAIL)))
                 .build();
 
         return user;

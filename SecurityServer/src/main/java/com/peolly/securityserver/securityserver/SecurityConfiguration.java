@@ -44,9 +44,9 @@ public class SecurityConfiguration {
                     corsConfiguration.setAllowCredentials(true);
                     return corsConfiguration;
                 }))
+                //TODO: add RM to ../auth/get-role
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/*").permitAll()
-                        .requestMatchers("/example/**").permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/store/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-resources/*", "/v3/api-docs/**").permitAll()

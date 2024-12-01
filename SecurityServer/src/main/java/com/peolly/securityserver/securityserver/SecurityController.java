@@ -1,8 +1,10 @@
 package com.peolly.securityserver.securityserver;
 
 
+import com.peolly.securityserver.usermicroservice.dto.RoleUpdateRequest;
 import com.peolly.securityserver.usermicroservice.exceptions.IncorrectSearchPath;
 import com.peolly.securityserver.usermicroservice.exceptions.JwtTokenExpiredException;
+import com.peolly.securityserver.usermicroservice.services.UserService;
 import com.peolly.utilservice.ApiResponse;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,6 +27,7 @@ import java.util.stream.Collectors;
 public class SecurityController {
 
     private final AuthenticationService authenticationService;
+    private final UserService userService;
 
     @Hidden
     @RequestMapping(value = "/**")
@@ -86,6 +89,12 @@ public class SecurityController {
             return ResponseEntity.badRequest().body(new ApiResponse(false, "User not found or token has expired"));
         }
         return ResponseEntity.ok(new ApiResponse(true, authResponse));
+    }
+
+    @PatchMapping("/update-role")
+    public ResponseEntity<ApiResponse> updateUserRole(@RequestBody RoleUpdateRequest roleUpdateRequest) {
+        userService.updateUserRole(roleUpdateRequest.role(), roleUpdateRequest.add());
+        return ResponseEntity.ok(new ApiResponse(true, "Role modified successfully"));
     }
 
     private String getFieldsErrors(BindingResult bindingResult) {

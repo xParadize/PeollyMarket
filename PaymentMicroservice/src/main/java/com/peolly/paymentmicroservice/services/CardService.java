@@ -45,7 +45,6 @@ public class CardService {
 
     @Transactional
     public void savePaymentMethod(CardDto dto, UUID userId) {
-
         Card cardToSave = Card.builder()
                 .userId(userId)
                 .cardNumber(dto.getCardNumber())
