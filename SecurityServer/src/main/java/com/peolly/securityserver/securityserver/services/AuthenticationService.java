@@ -1,7 +1,12 @@
-package com.peolly.securityserver.securityserver;
+package com.peolly.securityserver.securityserver.services;
 
-import com.peolly.securityserver.securityserver.tempregistration.TempUserService;
-import com.peolly.securityserver.securityserver.tempregistration.TemporaryUser;
+import com.peolly.securityserver.securityserver.models.JwtAuthenticationResponse;
+import com.peolly.securityserver.securityserver.util.NameGenerator;
+import com.peolly.securityserver.securityserver.models.RefreshTokenRequest;
+import com.peolly.securityserver.securityserver.models.RefreshToken;
+import com.peolly.securityserver.securityserver.models.SignInRequest;
+import com.peolly.securityserver.securityserver.models.SignUpRequest;
+import com.peolly.securityserver.securityserver.models.TemporaryUser;
 import com.peolly.securityserver.usermicroservice.enums.UserRole;
 import com.peolly.securityserver.usermicroservice.model.User;
 import com.peolly.securityserver.usermicroservice.services.AuthDeviceInfoService;
@@ -61,7 +66,7 @@ public class AuthenticationService {
     public JwtAuthenticationResponse enableUser(TemporaryUser temporaryUser) {
 
         User userToSave = convertTempUserToUser(temporaryUser);
-        userService.save(userToSave);
+        userService.saveUser(userToSave);
         tempUserService.deleteTempUserById(temporaryUser.getId());
 
         var jwt = jwtService.generateToken(userToSave);

@@ -1,6 +1,5 @@
 package com.peolly.paymentmicroservice.models;
 
-import com.peolly.paymentmicroservice.enums.CardType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.proxy.HibernateProxy;

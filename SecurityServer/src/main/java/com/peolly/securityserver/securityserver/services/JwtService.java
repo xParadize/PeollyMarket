@@ -1,4 +1,4 @@
-package com.peolly.securityserver.securityserver;
+package com.peolly.securityserver.securityserver.services;
 
 import com.peolly.securityserver.usermicroservice.exceptions.JwtTokenExpiredException;
 import com.peolly.securityserver.usermicroservice.model.User;

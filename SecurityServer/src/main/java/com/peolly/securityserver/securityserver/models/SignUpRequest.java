@@ -1,4 +1,4 @@
-package com.peolly.securityserver.securityserver;
+package com.peolly.securityserver.securityserver.models;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
