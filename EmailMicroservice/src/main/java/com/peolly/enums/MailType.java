@@ -1,4 +1,4 @@
-package com.peolly;
+package com.peolly.enums;
 
 public enum MailType {
     REGISTRATION_VERIFY_EMAIL,

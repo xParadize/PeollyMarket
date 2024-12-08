@@ -12,14 +12,6 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class CompanyService {
-
-//    @Value("${onlinestore.host_name}")
-//    private String hostName;
-//
-//    @Value("${onlinestore.host_port}")
-//    private String hostPort;
-
-
     private final CompanyRepository companyRepository;
 
     @Transactional(readOnly = true)

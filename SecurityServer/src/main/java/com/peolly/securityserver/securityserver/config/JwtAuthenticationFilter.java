@@ -1,5 +1,6 @@
-package com.peolly.securityserver.securityserver;
+package com.peolly.securityserver.securityserver.config;
 
+import com.peolly.securityserver.securityserver.services.JwtService;
 import com.peolly.securityserver.usermicroservice.exceptions.JwtTokenExpiredException;
 import com.peolly.securityserver.usermicroservice.services.UserService;
 import jakarta.servlet.FilterChain;

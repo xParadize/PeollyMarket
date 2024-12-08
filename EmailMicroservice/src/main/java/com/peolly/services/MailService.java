@@ -1,4 +1,4 @@
-package com.peolly;
+package com.peolly.services;
 
 import freemarker.template.Configuration;
 import jakarta.mail.internet.MimeMessage;
@@ -19,18 +19,6 @@ public class MailService {
 
     private final Configuration configuration;
     private final JavaMailSender mailSender;
-
-
-//    @Transactional(readOnly = true)
-//    public void sendEmail(User user, MailType type) {
-//        switch (type) {
-//            case COMPANY_TICKET_SEND -> sendTicketCreated(user);
-//            // TODO: reminder when delete cart items
-//            // case REMINDER -> System.out.println("Soon");
-//            default -> {}
-//        }
-//    }
-//
 
     @Async
     @SneakyThrows

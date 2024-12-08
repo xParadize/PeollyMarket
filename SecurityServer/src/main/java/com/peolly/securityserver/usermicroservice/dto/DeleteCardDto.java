@@ -1,4 +1,4 @@
-package com.peolly.securityserver.dto;
+package com.peolly.securityserver.usermicroservice.dto;
 
 import java.io.Serializable;
 

@@ -1,4 +1,4 @@
-package com.peolly.securityserver.securityserver.tempregistration;
+package com.peolly.securityserver.securityserver.models;
 
 import lombok.*;
 import org.hibernate.annotations.UuidGenerator;

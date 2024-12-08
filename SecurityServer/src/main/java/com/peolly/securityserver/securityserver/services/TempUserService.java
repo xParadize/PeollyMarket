@@ -1,5 +1,7 @@
-package com.peolly.securityserver.securityserver.tempregistration;
+package com.peolly.securityserver.securityserver.services;
 
+import com.peolly.securityserver.securityserver.models.TemporaryUser;
+import com.peolly.securityserver.securityserver.repositories.TempUserRepository;
 import com.peolly.utilservice.events.SendEmailConfirmationTokenEvent;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.producer.ProducerRecord;

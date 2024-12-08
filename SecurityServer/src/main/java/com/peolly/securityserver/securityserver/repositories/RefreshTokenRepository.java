@@ -1,5 +1,6 @@
-package com.peolly.securityserver.securityserver;
+package com.peolly.securityserver.securityserver.repositories;
 
+import com.peolly.securityserver.securityserver.models.RefreshToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

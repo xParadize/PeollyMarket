@@ -1,6 +1,11 @@
-package com.peolly.securityserver.securityserver;
+package com.peolly.securityserver.securityserver.controllers;
 
 
+import com.peolly.securityserver.securityserver.models.JwtAuthenticationResponse;
+import com.peolly.securityserver.securityserver.models.RefreshTokenRequest;
+import com.peolly.securityserver.securityserver.models.SignInRequest;
+import com.peolly.securityserver.securityserver.models.SignUpRequest;
+import com.peolly.securityserver.securityserver.services.AuthenticationService;
 import com.peolly.securityserver.usermicroservice.dto.RoleUpdateRequest;
 import com.peolly.securityserver.usermicroservice.exceptions.IncorrectSearchPath;
 import com.peolly.securityserver.usermicroservice.exceptions.JwtTokenExpiredException;

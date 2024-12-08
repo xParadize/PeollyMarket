@@ -1,5 +1,7 @@
-package com.peolly.securityserver.securityserver;
+package com.peolly.securityserver.securityserver.services;
 
+import com.peolly.securityserver.securityserver.models.RefreshToken;
+import com.peolly.securityserver.securityserver.repositories.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

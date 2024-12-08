@@ -1,4 +1,4 @@
-package com.peolly.securityserver.securityserver;
+package com.peolly.securityserver.securityserver.util;
 
 import org.springframework.stereotype.Component;
 

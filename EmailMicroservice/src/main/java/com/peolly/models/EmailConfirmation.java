@@ -1,4 +1,4 @@
-package com.peolly;
+package com.peolly.models;
 
 import jakarta.persistence.*;
 import lombok.*;

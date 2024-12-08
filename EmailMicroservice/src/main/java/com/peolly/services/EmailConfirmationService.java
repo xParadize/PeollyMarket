@@ -1,5 +1,7 @@
-package com.peolly;
+package com.peolly.services;
 
+import com.peolly.models.EmailConfirmation;
+import com.peolly.repositories.EmailConfirmationRepository;
 import com.peolly.utilservice.events.SendEmailConfirmationTokenEvent;
 import com.peolly.utilservice.events.SendUserCreatedEvent;
 import lombok.RequiredArgsConstructor;

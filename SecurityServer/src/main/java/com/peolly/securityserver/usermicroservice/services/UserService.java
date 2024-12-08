@@ -22,9 +22,8 @@ public class UserService {
 
     private final UserRepository usersRepository;
 
-    // TODO: rename method
     @Transactional
-    public void save(User userToSave) {
+    public void saveUser(User userToSave) {
         usersRepository.save(userToSave);
     }
 
@@ -83,7 +82,7 @@ public class UserService {
             }
             user.getRoles().remove(userRole);
         }
-        save(user);
+        saveUser(user);
     }
 
     private UserRole convertStringToUserRole(String inputString) {

@@ -1,4 +1,4 @@
-package com.peolly.securityserver.securityserver;
+package com.peolly.securityserver.securityserver.config;
 
 import com.peolly.securityserver.usermicroservice.services.UserService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -44,7 +44,6 @@ public class SecurityConfiguration {
                     corsConfiguration.setAllowCredentials(true);
                     return corsConfiguration;
                 }))
-                //TODO: add RM to ../auth/get-role
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/*").permitAll()
                         .requestMatchers("/auth/**").permitAll()

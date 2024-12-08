@@ -1,7 +1,7 @@
 package com.peolly.securityserver.usermicroservice.controllers;
 
-import com.peolly.securityserver.dto.CardData;
-import com.peolly.securityserver.dto.DeleteCardDto;
+import com.peolly.securityserver.usermicroservice.dto.CardData;
+import com.peolly.securityserver.usermicroservice.dto.DeleteCardDto;
 import com.peolly.securityserver.kafka.SecurityKafkaListenerFutureWaiter;
 import com.peolly.securityserver.usermicroservice.exceptions.IncorrectSearchPath;
 import com.peolly.securityserver.usermicroservice.exceptions.NoCreditCardLinkedException;
