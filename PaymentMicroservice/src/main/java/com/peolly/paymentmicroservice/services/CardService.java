@@ -6,8 +6,6 @@ import com.peolly.paymentmicroservice.enums.CardType;
 import com.peolly.paymentmicroservice.kafka.PaymentKafkaProducer;
 import com.peolly.paymentmicroservice.models.Card;
 import com.peolly.paymentmicroservice.repositories.CardRepository;
-import com.peolly.utilservice.events.DeletePaymentMethodEvent;
-import com.peolly.utilservice.events.UserIdEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
@@ -61,53 +59,53 @@ public class CardService {
         return CardType.UNDEFINED_CARD;
     }
 
-    @Transactional(readOnly = true)
-    @KafkaListener(topics = "send-user-id-event", groupId = "org-deli-queuing-security")
-    public void getAllPaymentMethods(UserIdEvent userIdEvent) {
-        List<Card> userCards = cardRepository.findAllByUserId(userIdEvent.userId());
-        List<String> methodsToReturn = new ArrayList<>();
+//    @Transactional(readOnly = true)
+//    @KafkaListener(topics = "send-user-id-event", groupId = "org-deli-queuing-security")
+//    public void getAllPaymentMethods(UserIdEvent userIdEvent) {
+//        List<Card> userCards = cardRepository.findAllByUserId(userIdEvent.userId());
+//        List<String> methodsToReturn = new ArrayList<>();
+//
+//        userCards.parallelStream()
+//                .forEach(card -> methodsToReturn.add(card.getCardNumber()));
+//        paymentKafkaProducer.sendGetAllCards(methodsToReturn);
+//    }
+//
+//    @Transactional
+//    @KafkaListener(topics = "send-delete-payment-method", groupId = "org-deli-queuing-payment")
+//    public void consumeSendDeletePaymentMethod(DeletePaymentMethodEvent deletePaymentMethodEvent) {
+//        String cardNumber = deletePaymentMethodEvent.cardNumber();
+//        UUID userId = deletePaymentMethodEvent.userId();
+//        Card userCard = getCardByCardNumber(cardNumber);
+//
+//        if (userCard != null && userCard.getUserId().equals(deletePaymentMethodEvent.userId())) {
+//            processSuccessfulDeletingPaymentMethod(cardNumber, userId);
+//        } else {
+//            processUnsuccessfulSavingPaymentMethod(userId);
+//        }
+//    }
 
-        userCards.parallelStream()
-                .forEach(card -> methodsToReturn.add(card.getCardNumber()));
-        paymentKafkaProducer.sendGetAllCards(methodsToReturn);
-    }
+//    private void sendWasPaymentMethodDeleted(UUID userId, boolean isSuccess) {
+//        paymentKafkaProducer.sendWasPaymentMethodRemoved(userId, isSuccess);
+//    }
 
-    @Transactional
-    @KafkaListener(topics = "send-delete-payment-method", groupId = "org-deli-queuing-payment")
-    public void consumeSendDeletePaymentMethod(DeletePaymentMethodEvent deletePaymentMethodEvent) {
-        String cardNumber = deletePaymentMethodEvent.cardNumber();
-        UUID userId = deletePaymentMethodEvent.userId();
-        Card userCard = getCardByCardNumber(cardNumber);
-
-        if (userCard != null && userCard.getUserId().equals(deletePaymentMethodEvent.userId())) {
-            processSuccessfulDeletingPaymentMethod(cardNumber, userId);
-        } else {
-            processUnsuccessfulSavingPaymentMethod(userId);
-        }
-    }
-
-    private void sendWasPaymentMethodDeleted(UUID userId, boolean isSuccess) {
-        paymentKafkaProducer.sendWasPaymentMethodRemoved(userId, isSuccess);
-    }
-
-    @Transactional
-    public void processSuccessfulDeletingPaymentMethod(String cardNumber, UUID userId) {
-        deletePaymentMethod(cardNumber);
-        sendPaymentMethodDeletedSuccessful(userId);
-    }
-
-    @Transactional
-    public void processUnsuccessfulSavingPaymentMethod(UUID userId) {
-        sendPaymentMethodDeletedUnsuccessful(userId);
-    }
-
-    private void sendPaymentMethodDeletedSuccessful(UUID userId) {
-        sendWasPaymentMethodDeleted(userId, true);
-    }
-
-    private void sendPaymentMethodDeletedUnsuccessful(UUID userId) {
-        sendWasPaymentMethodDeleted(userId, false);
-    }
+//    @Transactional
+//    public void processSuccessfulDeletingPaymentMethod(String cardNumber, UUID userId) {
+//        deletePaymentMethod(cardNumber);
+//        sendPaymentMethodDeletedSuccessful(userId);
+//    }
+//
+//    @Transactional
+//    public void processUnsuccessfulSavingPaymentMethod(UUID userId) {
+//        sendPaymentMethodDeletedUnsuccessful(userId);
+//    }
+//
+////    private void sendPaymentMethodDeletedSuccessful(UUID userId) {
+////        sendWasPaymentMethodDeleted(userId, true);
+////    }
+////
+////    private void sendPaymentMethodDeletedUnsuccessful(UUID userId) {
+////        sendWasPaymentMethodDeleted(userId, false);
+////    }
 
     @Transactional(readOnly = true)
     public Card getCardByCardNumber(String cardNumber) {

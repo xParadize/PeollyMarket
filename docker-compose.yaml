@@ -136,6 +136,14 @@ services:
       start_period: 60s
       retries: 5
 
+  schema-registry:
+    image: confluentinc/cp-schema-registry:latest
+    ports:
+      - "8123:8123"
+    environment:
+      - SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS=PLAINTEXT://kafka-1:9090,kafka-2:9090,kafka-3:9090
+      - SCHEMA_REGISTRY_HOST_NAME=schema-registry
+
 networks:
   postgres:
     driver: bridge

@@ -117,7 +117,7 @@ public class AuthenticationService {
         TemporaryUser temporaryUser = tempUserService.findTempUserById(UUID.fromString(token))
                 .orElseThrow(EmailConfirmationTokenExpiredException::new);
 
-        securityKafkaProducer.sendEmailConfirmed(token, temporaryUser);
+        // securityKafkaProducer.sendEmailConfirmed(token, temporaryUser);
 
         JwtAuthenticationResponse response = enableUser(temporaryUser);
 

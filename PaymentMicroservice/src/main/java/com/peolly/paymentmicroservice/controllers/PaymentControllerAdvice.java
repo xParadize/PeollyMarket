@@ -1,7 +1,7 @@
 package com.peolly.paymentmicroservice.controllers;
 
+import com.peolly.paymentmicroservice.dto.ApiResponse;
 import com.peolly.paymentmicroservice.exceptions.IncorrectSearchPath;
-import com.peolly.utilservice.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

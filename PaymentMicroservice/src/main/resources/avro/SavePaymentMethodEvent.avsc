@@ -1,0 +1,13 @@
+{
+  "type": "record",
+  "name": "SavePaymentMethodEvent",
+  "namespace": "org.deli.queuing.payment",
+  "fields": [
+    {"name": "userId", "type": "string"},
+    {"name": "cardNumber", "type": "string"},
+    {"name": "monthExpiration", "type": "string"},
+    {"name": "yearExpiration", "type": "string"},
+    {"name": "cvv", "type": "int"},
+    {"name": "availableMoney", "type": "double"}
+  ]
+}

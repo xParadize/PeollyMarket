@@ -1,5 +1,7 @@
 package com.peolly.securityserver.kafka;
 
+import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,12 +51,17 @@ public class KafkaProducerConfiguration {
     @Value("${spring.kafka.properties.max.in.flight.requests.per.connection}")
     private Integer maxInFlightRequests;
 
+    @Value("${spring.kafka.properties.schema.registry.url}")
+    private String schemaRegistryUrl;
+
     @Bean
     public <T> ProducerFactory<String, T> producerFactory() {
         Map<String, Object> config = new HashMap<>();
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, keySerializer);
-        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, valueSerializer);
+        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
+        config.put("schema.registry.url", schemaRegistryUrl);
+        config.put("specific.avro.reader", true);
         config.put(ProducerConfig.ACKS_CONFIG, acks);
         config.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, deliveryTimeoutMs);
         config.put(ProducerConfig.LINGER_MS_CONFIG, lingerMs);
