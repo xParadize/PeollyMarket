@@ -19,7 +19,7 @@ public class TempUserService {
     @Transactional
     public void createTempUser(TemporaryUser tempUser) {
         tempUserRepository.save(tempUser);
-        securityKafkaProducer.sendCreateTemporaryUser(tempUser);
+        // securityKafkaProducer.sendCreateTemporaryUser(tempUser);
     }
 
     @Transactional

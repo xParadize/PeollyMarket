@@ -17,16 +17,6 @@
           <package value="com.peolly.paymentmicroservice" />
         </packages>
       </persistence-unit>
-      <persistence-unit moduleName="CompanyMicroservice" name="Default">
-        <packages>
-          <package value="com.peolly.companymicroservice" />
-        </packages>
-      </persistence-unit>
-      <persistence-unit moduleName="ProductMicroservice" name="Default">
-        <packages>
-          <package value="com.peolly.productmicroservice" />
-        </packages>
-      </persistence-unit>
     </persistence-units>
   </component>
 </project>

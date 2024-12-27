@@ -1,8 +1,6 @@
 package com.peolly.paymentmicroservice.services;
 
 import com.peolly.paymentmicroservice.dto.CardDto;
-import com.peolly.paymentmicroservice.models.Card;
-import com.peolly.paymentmicroservice.models.CardValidationErrorFields;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -14,19 +12,8 @@ import java.util.UUID;
 public class CardDataValidator {
     private final CardService cardService;
 
-    public CardValidationErrorFields isCardValid(CardDto dto, UUID userId) {
-        boolean checkExpiration = isCardExpirationDataValid(dto);
-        boolean checkBalance = isCardBalanceSuitable(dto);
-        boolean checkUsage = isCardNotInUse(dto, userId);
-
-        System.out.println("Exp: " + checkExpiration + " Bal: " + checkBalance + " Usa:" + checkUsage);
-
-        return new CardValidationErrorFields(
-                checkUsage && checkExpiration && checkBalance,
-                checkExpiration,
-                checkBalance,
-                checkUsage
-        );
+    public boolean isCardValid(CardDto dto, UUID userId) {
+        return isCardExpirationDataValid(dto) && isCardBalanceSuitable(dto) && isCardNotInUse(dto, userId);
     }
 
     private boolean isCardExpirationDataValid(CardDto card) {

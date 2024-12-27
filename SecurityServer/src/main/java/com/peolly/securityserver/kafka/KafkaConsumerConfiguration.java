@@ -1,7 +1,7 @@
 package com.peolly.securityserver.kafka;
 
-import com.peolly.utilservice.exceptions.NonRetryableException;
-import com.peolly.utilservice.exceptions.RetryableException;
+import com.peolly.securityserver.exceptions.NonRetryableException;
+import com.peolly.securityserver.exceptions.RetryableException;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
