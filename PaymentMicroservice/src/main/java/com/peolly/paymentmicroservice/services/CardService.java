@@ -1,41 +1,30 @@
 package com.peolly.paymentmicroservice.services;
 
 import com.peolly.paymentmicroservice.dto.CardDto;
+import com.peolly.paymentmicroservice.dto.CardMapper;
 import com.peolly.paymentmicroservice.enums.CardType;
+import com.peolly.paymentmicroservice.kafka.PaymentKafkaProducer;
 import com.peolly.paymentmicroservice.models.Card;
 import com.peolly.paymentmicroservice.repositories.CardRepository;
-import com.peolly.utilservice.ApiResponse;
-import com.peolly.utilservice.events.*;
+import com.peolly.utilservice.events.DeletePaymentMethodEvent;
+import com.peolly.utilservice.events.UserIdEvent;
 import lombok.RequiredArgsConstructor;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 
 @Service
 @RequiredArgsConstructor
 public class CardService {
-
     private final CardRepository cardRepository;
-
-    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
-    private final KafkaTemplate<String, SendGetAllPaymentMethods> sendGetAllPaymentMethods;
-    private final KafkaTemplate<String, WasPaymentMethodDeletedEvent> wasPaymentMethodDeletedEvent;
-//    private final MailService mailService;
-//    private final UserService usersService;
-//
+    private final PaymentKafkaProducer paymentKafkaProducer;
+    private final CardMapper cardMapper;
 
 //    @Transactional(readOnly = true)
 //    public Card getCardNumberByUserId(UUID userId) {
@@ -45,29 +34,22 @@ public class CardService {
 
     @Transactional
     public void savePaymentMethod(CardDto dto, UUID userId) {
-        Card cardToSave = Card.builder()
-                .userId(userId)
-                .cardNumber(dto.getCardNumber())
-                .monthExpiration(dto.getMonthExpiration())
-                .yearExpiration(dto.getYearExpiration())
-                .cvv(dto.getCvv())
-                .availableMoney(dto.getAvailableMoney())
-                .cardType(getCardType(dto.getCardNumber()).toString())
-                .build();
+        System.out.println(dto.getCardNumber());
+        Card cardToSave = convertDtoToCard(dto);
+        cardToSave.setUserId(userId);
+        cardToSave.setCardType(getCardType(dto.getCardNumber()).toString());
         cardRepository.save(cardToSave);
-
-
         // mailService.sendCreditCartLinkedEmail(user, dto.getCardNumber());
     }
 
     @Transactional
-    public void take1rub(String cardNumber) {
-        cardRepository.take1rub(cardNumber);
+    public void takeMoneyFromCard(String cardNumber) {
+        cardRepository.takeMoneyFromCard(BigDecimal.valueOf(11), cardNumber);
     }
 
     @Transactional
-    public void give1rub(String cardNumber) {
-        cardRepository.give1rub(cardNumber);
+    public void addMoneyToCard(String cardNumber) {
+        cardRepository.addMoneyToCard(BigDecimal.valueOf(11), cardNumber);
     }
 
     private CardType getCardType(String number) {
@@ -81,34 +63,21 @@ public class CardService {
 
     @Transactional(readOnly = true)
     @KafkaListener(topics = "send-user-id-event", groupId = "org-deli-queuing-security")
-    public void getAllPaymentMethods(SendUserIdEvent userIdEvent) throws ExecutionException, InterruptedException {
+    public void getAllPaymentMethods(UserIdEvent userIdEvent) {
         List<Card> userCards = cardRepository.findAllByUserId(userIdEvent.userId());
         List<String> methodsToReturn = new ArrayList<>();
 
         userCards.parallelStream()
                 .forEach(card -> methodsToReturn.add(card.getCardNumber()));
-
-        SendGetAllPaymentMethods paymentMethods = new SendGetAllPaymentMethods(methodsToReturn);
-
-        ProducerRecord<String, SendGetAllPaymentMethods> record = new ProducerRecord<>(
-                "send-get-all-payment-methods",
-                "userId",
-                paymentMethods
-        );
-
-        SendResult<String, SendGetAllPaymentMethods> result = sendGetAllPaymentMethods
-                .send(record).get();
-
-        LOGGER.info("Sent event: {}", result);
+        paymentKafkaProducer.sendGetAllCards(methodsToReturn);
     }
 
     @Transactional
     @KafkaListener(topics = "send-delete-payment-method", groupId = "org-deli-queuing-payment")
-    public void consumeSendDeletePaymentMethod(SendDeletePaymentMethodEvent deletePaymentMethodEvent) throws ExecutionException, InterruptedException {
-
+    public void consumeSendDeletePaymentMethod(DeletePaymentMethodEvent deletePaymentMethodEvent) {
         String cardNumber = deletePaymentMethodEvent.cardNumber();
         UUID userId = deletePaymentMethodEvent.userId();
-        Card userCard = getUserCardByCardNumber(cardNumber);
+        Card userCard = getCardByCardNumber(cardNumber);
 
         if (userCard != null && userCard.getUserId().equals(deletePaymentMethodEvent.userId())) {
             processSuccessfulDeletingPaymentMethod(cardNumber, userId);
@@ -117,43 +86,31 @@ public class CardService {
         }
     }
 
-    private void sendWasPaymentMethodDeleted(UUID userId, boolean isSuccess) throws ExecutionException, InterruptedException {
-
-        WasPaymentMethodDeletedEvent paymentMethodDeletedEvent = new WasPaymentMethodDeletedEvent(isSuccess);
-
-        ProducerRecord<String, WasPaymentMethodDeletedEvent> record = new ProducerRecord<>(
-                "send-was-payment-method-deleted",
-                userId.toString(),
-                paymentMethodDeletedEvent
-        );
-
-        SendResult<String, WasPaymentMethodDeletedEvent> result = wasPaymentMethodDeletedEvent
-                .send(record).get();
-
-        LOGGER.info("Sent event: {}", result);
+    private void sendWasPaymentMethodDeleted(UUID userId, boolean isSuccess) {
+        paymentKafkaProducer.sendWasPaymentMethodRemoved(userId, isSuccess);
     }
 
     @Transactional
-    public void processSuccessfulDeletingPaymentMethod(String cardNumber, UUID userId) throws ExecutionException, InterruptedException {
+    public void processSuccessfulDeletingPaymentMethod(String cardNumber, UUID userId) {
         deletePaymentMethod(cardNumber);
         sendPaymentMethodDeletedSuccessful(userId);
     }
 
     @Transactional
-    public void processUnsuccessfulSavingPaymentMethod(UUID userId) throws ExecutionException, InterruptedException {
+    public void processUnsuccessfulSavingPaymentMethod(UUID userId) {
         sendPaymentMethodDeletedUnsuccessful(userId);
     }
 
-    private void sendPaymentMethodDeletedSuccessful(UUID userId) throws ExecutionException, InterruptedException {
+    private void sendPaymentMethodDeletedSuccessful(UUID userId) {
         sendWasPaymentMethodDeleted(userId, true);
     }
 
-    private void sendPaymentMethodDeletedUnsuccessful(UUID userId) throws ExecutionException, InterruptedException {
+    private void sendPaymentMethodDeletedUnsuccessful(UUID userId) {
         sendWasPaymentMethodDeleted(userId, false);
     }
 
     @Transactional(readOnly = true)
-    public Card getUserCardByCardNumber(String cardNumber) {
+    public Card getCardByCardNumber(String cardNumber) {
         Optional<Card> card = cardRepository.findByCardNumber(cardNumber);
         return card.orElse(null);
     }
@@ -169,10 +126,7 @@ public class CardService {
         return cardRepository.isCardBelongToUser(cardNumber, userId);
     }
 
-//    private PaymentMethodDto convertCardToPaymentMethodDto(Card card) {
-//        PaymentMethodDto dto = PaymentMethodDto.builder()
-//                .cardNumber(card.getCardNumber())
-//                .build();
-//        return dto;
-//    }
+    private Card convertDtoToCard(CardDto dto) {
+        return cardMapper.toEntity(dto);
+    }
 }

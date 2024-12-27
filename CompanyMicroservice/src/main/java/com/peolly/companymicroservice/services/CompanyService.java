@@ -1,9 +1,12 @@
 package com.peolly.companymicroservice.services;
 
 
+import com.peolly.companymicroservice.kafka.CompanyKafkaProducer;
 import com.peolly.companymicroservice.models.Company;
 import com.peolly.companymicroservice.repositories.CompanyRepository;
+import com.peolly.utilservice.events.GetCompanyByIdEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,10 +16,18 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CompanyService {
     private final CompanyRepository companyRepository;
+    private final CompanyKafkaProducer companyKafkaProducer;
 
     @Transactional(readOnly = true)
     public Optional<Company> getCompanyById(Long id) {
         return companyRepository.findCompanyById(id);
+    }
+
+    @Transactional
+    @KafkaListener(topics = "send-get-company-by-id", groupId = "org-deli-queuing-product")
+    public void consumeGetCompanyByIdEvent(GetCompanyByIdEvent event) {
+        Optional<Company> company = getCompanyById(event.companyId());
+        companyKafkaProducer.sendGetCompanyByIdResponse(company, event.companyId());
     }
 //
 //    @Transactional(readOnly = true)

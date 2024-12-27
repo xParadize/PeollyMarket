@@ -1,7 +1,7 @@
 package com.peolly.securityserver.securityserver.config;
 
 import com.peolly.securityserver.securityserver.services.JwtService;
-import com.peolly.securityserver.usermicroservice.exceptions.JwtTokenExpiredException;
+import com.peolly.securityserver.exceptions.JwtTokenExpiredException;
 import com.peolly.securityserver.usermicroservice.services.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -25,7 +25,6 @@ import java.io.IOException;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-
     private final JwtService jwtService;
     private final UserService userService;
 

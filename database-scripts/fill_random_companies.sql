@@ -1,0 +1,22 @@
+INSERT INTO company (name, description, inn, requisites, registered_at, creator_id)
+VALUES
+    ('Company 1', 'Description for Company 1', 1234567890, 100001, NOW(), '1a1957b9-a6c1-4aae-8bd8-7364ec61316a'),
+    ('Company 2', 'Description for Company 2', 1234567891, 100002, NOW(), '3af0b4b8-c5a3-495b-9a7b-70237348fb25'),
+    ('Company 3', 'Description for Company 3', 1234567892, 100003, NOW(), 'b9c15e17-4c76-4988-a7ae-b87554122b71'),
+    ('Company 4', 'Description for Company 4', 1234567893, 100004, NOW(), '2c4ae9ab-cdcf-4dff-ba58-a73324a5045d'),
+    ('Company 5', 'Description for Company 5', 1234567894, 100005, NOW(), '844a1da0-41a0-4e49-995b-a79c0aa5789c'),
+    ('Company 6', 'Description for Company 6', 1234567895, 100006, NOW(), '513cd436-97c3-4cd4-b52e-40287123e07d'),
+    ('Company 7', 'Description for Company 7', 1234567896, 100007, NOW(), 'dcc12a1f-8f7a-4059-8406-3b9be65f82ee'),
+    ('Company 8', 'Description for Company 8', 1234567897, 100008, NOW(), 'e6839611-64ad-4917-87fb-52a39c9574a1'),
+    ('Company 9', 'Description for Company 9', 1234567898, 100009, NOW(), '04c616ec-b949-4bb1-bdb2-34a54524f5a6'),
+    ('Company 10', 'Description for Company 10', 1234567899, 100010, NOW(), '6f3a6a10-09b1-44ab-811c-4a9698241bfa'),
+    ('Company 11', 'Description for Company 11', 1234567900, 100011, NOW(), '9c2e3c6c-7265-48f0-93ad-5c2873760767'),
+    ('Company 12', 'Description for Company 12', 1234567901, 100012, NOW(), '6e3a10aa-9832-4ecd-ac53-f2cfbd6a5bbb'),
+    ('Company 13', 'Description for Company 13', 1234567902, 100013, NOW(), '3e39d605-8109-4dcd-bce3-2aa3dcc3136b'),
+    ('Company 14', 'Description for Company 14', 1234567903, 100014, NOW(), 'ccbdd122-5bf3-4f3d-ab0a-765ce4067700'),
+    ('Company 15', 'Description for Company 15', 1234567904, 100015, NOW(), '5fd6eb97-df09-4667-9e67-6b528967770a'),
+    ('Company 16', 'Description for Company 16', 1234567905, 100016, NOW(), '23fe3528-6001-493f-9b3d-619dc09021bb'),
+    ('Company 17', 'Description for Company 17', 1234567906, 100017, NOW(), 'c7a74c87-5709-4a06-91a5-d8de1ac5df85'),
+    ('Company 18', 'Description for Company 18', 1234567907, 100018, NOW(), '8e06131d-9dae-4ac4-a106-4a56c3bca2b0'),
+    ('Company 19', 'Description for Company 19', 1234567908, 100019, NOW(), '65760943-0328-4bf4-a727-29dae5fed5d0'),
+    ('Company 20', 'Description for Company 20', 1234567909, 100020, NOW(), '26e4fba6-e5e5-4c3f-8601-4796a8fe1147');

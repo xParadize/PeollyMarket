@@ -1,5 +1,6 @@
 package com.peolly.securityserver.kafka;
 
+import com.peolly.utilservice.events.PaymentMethodWasNotAddedEvent;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.stereotype.Service;
@@ -11,7 +12,7 @@ import java.util.concurrent.CompletableFuture;
 @Setter
 @Service
 public class SecurityKafkaListenerFutureWaiter {
-    private CompletableFuture<Boolean> wasPaymentMethodAddedFuture;
+    private CompletableFuture<PaymentMethodWasNotAddedEvent> wasPaymentMethodAddedFuture;
     private CompletableFuture<List<String>> allPaymentMethodsFuture;
     private CompletableFuture<Boolean> wasPaymentMethodDeletedFuture;
 }

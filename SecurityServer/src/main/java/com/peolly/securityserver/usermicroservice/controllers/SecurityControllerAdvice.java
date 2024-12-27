@@ -1,6 +1,6 @@
 package com.peolly.securityserver.usermicroservice.controllers;
 
-import com.peolly.securityserver.usermicroservice.exceptions.*;
+import com.peolly.securityserver.exceptions.*;
 import com.peolly.utilservice.ApiResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 @AllArgsConstructor
 public class SecurityControllerAdvice {
-
     @ExceptionHandler(IncorrectSearchPath.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<ApiResponse> handleIncorrectSearchPath() {
@@ -46,6 +45,13 @@ public class SecurityControllerAdvice {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ApiResponse> handleMissingRoleException() {
         ApiResponse response = new ApiResponse(false, "User doesn't have this role to remove.");
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(EmailConfirmationTokenExpiredException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ApiResponse> handleEmailConfirmationTokenExpiredException() {
+        ApiResponse response = new ApiResponse(false, "Confirmation token has expired.");
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 }

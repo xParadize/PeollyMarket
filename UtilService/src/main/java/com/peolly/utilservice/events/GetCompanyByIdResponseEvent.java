@@ -2,10 +2,9 @@ package com.peolly.utilservice.events;
 
 import java.io.Serializable;
 
-public record SendCreateProductEvent(
-        String name,
-        String description,
+public record GetCompanyByIdResponseEvent(
         Long companyId,
-        Double price)
+        boolean isFound,
+        String companyName)
 implements Serializable {
 }

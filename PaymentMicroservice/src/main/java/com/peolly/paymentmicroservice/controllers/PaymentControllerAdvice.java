@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 @RequiredArgsConstructor
 public class PaymentControllerAdvice {
-
     @ExceptionHandler(IncorrectSearchPath.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<ApiResponse> handleIncorrectSearchPath() {

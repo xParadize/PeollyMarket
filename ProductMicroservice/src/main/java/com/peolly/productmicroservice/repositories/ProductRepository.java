@@ -17,10 +17,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
         Page<Product> findAll(Pageable var1);
         Optional<Product> findProductByName(String name);
         Optional<Product> findProductByDescription(String description);
-        Optional<Product> findById(Long id);
+        Optional<Product> findProductById(Long productId);
+        int countProductsByCompanyId(Long companyId);
 
-        @Query(value = "SELECT * FROM Product WHERE company_id = :organization_id ORDER BY company_id OFFSET :offset LIMIT :limit", nativeQuery = true)
-        List<Product> findProductsByOrganizationNameWithPagination(@Param("organization_id") Long organizationId, @Param("offset") int offset, @Param("limit") int limit);
+        @Query(value = "SELECT * FROM Product WHERE company_id = :company_id ORDER BY company_id OFFSET :offset LIMIT :limit", nativeQuery = true)
+        List<Product> findProductsByCompanyIdWithPagination(@Param("company_id") Long companyId, @Param("offset") int offset, @Param("limit") int limit);
 
         @Query(value = "SELECT * FROM product WHERE discount is not null", nativeQuery = true)
         List<Product> findAllProductsWithDiscount();

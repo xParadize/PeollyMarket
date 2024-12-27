@@ -1,6 +1,6 @@
 package com.peolly.securityserver.usermicroservice.controllers;
 
-import com.peolly.securityserver.usermicroservice.exceptions.IncorrectSearchPath;
+import com.peolly.securityserver.exceptions.IncorrectSearchPath;
 import com.peolly.utilservice.ApiResponse;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/")
 public class HostController {
-
     @Hidden
     @RequestMapping(value = "*")
     public ResponseEntity<ApiResponse> handleNotFound() {
