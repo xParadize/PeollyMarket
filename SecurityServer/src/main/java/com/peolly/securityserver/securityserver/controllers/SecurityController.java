@@ -1,14 +1,13 @@
 package com.peolly.securityserver.securityserver.controllers;
 
-
+import com.peolly.securityserver.exceptions.IncorrectSearchPath;
+import com.peolly.securityserver.exceptions.JwtTokenExpiredException;
 import com.peolly.securityserver.securityserver.models.JwtAuthenticationResponse;
 import com.peolly.securityserver.securityserver.models.RefreshTokenRequest;
 import com.peolly.securityserver.securityserver.models.SignInRequest;
 import com.peolly.securityserver.securityserver.models.SignUpRequest;
 import com.peolly.securityserver.securityserver.services.AuthenticationService;
 import com.peolly.securityserver.usermicroservice.dto.RoleUpdateRequest;
-import com.peolly.securityserver.usermicroservice.exceptions.IncorrectSearchPath;
-import com.peolly.securityserver.usermicroservice.exceptions.JwtTokenExpiredException;
 import com.peolly.securityserver.usermicroservice.services.UserService;
 import com.peolly.utilservice.ApiResponse;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -22,7 +21,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @RestController
@@ -42,21 +40,21 @@ public class SecurityController {
 
     @Operation(summary = "User registration")
     @PostMapping("/sign-up")
-    public ResponseEntity<?> signUp(@RequestBody @Valid SignUpRequest request, BindingResult bindingResult) {
+    public ResponseEntity<ApiResponse> signUp(@RequestBody @Valid SignUpRequest request, BindingResult bindingResult) {
         if (bindingResult.hasFieldErrors()) {
             String errors = getFieldsErrors(bindingResult);
-            return ResponseEntity.badRequest().body(new ApiResponse(false, errors));
+            return new ResponseEntity<>(new ApiResponse(false, errors), HttpStatus.BAD_REQUEST);
         }
 
         if (Objects.equals(request.getPassword(), request.getRepeatedPassword())) {
             try {
                 authenticationService.createTempUser(request);
-                return ResponseEntity.ok(new ApiResponse(true, "Confirm email"));
+                return new ResponseEntity<>(new ApiResponse(true, "Please, Confirm Your Email"), HttpStatus.OK);
             } catch (Exception e) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(false, "Registration error: " + e.getMessage()));
+                return new ResponseEntity<>(new ApiResponse(false, "Registration error: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
             }
         } else {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, "Passwords don't match"));
+            return new ResponseEntity<>(new ApiResponse(false, "Passwords don't match"), HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -65,7 +63,7 @@ public class SecurityController {
     public ResponseEntity<?> signIn(@RequestBody @Valid SignInRequest request, BindingResult bindingResult) {
         if (bindingResult.hasFieldErrors()) {
             String errors = getFieldsErrors(bindingResult);
-            return ResponseEntity.badRequest().body(new ApiResponse(false, errors));
+            return new ResponseEntity<>(new ApiResponse(false, errors), HttpStatus.BAD_REQUEST);
         }
 
         try {
@@ -88,11 +86,8 @@ public class SecurityController {
     }
 
     @GetMapping("/confirm-email/{confirmation_code}")
-    public ResponseEntity<?> confirmEmail(@PathVariable("confirmation_code") String uuid) throws ExecutionException, InterruptedException {
+    public ResponseEntity<?> confirmEmail(@PathVariable("confirmation_code") String uuid) {
         String authResponse = authenticationService.confirmEmailToken(uuid);
-        if (authResponse.equals("expired")) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, "User not found or token has expired"));
-        }
         return ResponseEntity.ok(new ApiResponse(true, authResponse));
     }
 

@@ -4,23 +4,18 @@ import com.peolly.companymicroservice.dto.CreateProductDto;
 import com.peolly.companymicroservice.exceptions.CompanyNotFoundException;
 import com.peolly.companymicroservice.exceptions.IncorrectSearchPath;
 import com.peolly.companymicroservice.kafka.CompanyKafkaListenerFutureWaiter;
+import com.peolly.companymicroservice.kafka.CompanyKafkaProducer;
 import com.peolly.companymicroservice.services.CompanyService;
 import com.peolly.utilservice.ApiResponse;
-import com.peolly.utilservice.events.SendCreateProductEvent;
-import com.peolly.utilservice.events.SendProductDataHaveProblemsEvent;
+import com.peolly.utilservice.events.ProductDataHaveProblemsEvent;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.SendResult;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,12 +32,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Tag(name = "Company")
 public class CompanyController {
-
     private final CompanyService companyService;
-
-    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
     private final CompanyKafkaListenerFutureWaiter companyKafkaListenerFutureWaiter;
-    private final KafkaTemplate<String, SendCreateProductEvent> sendCreateProductEvent;
+    private final CompanyKafkaProducer companyKafkaProducer;
 
     @Hidden
     @RequestMapping(value = "/**")
@@ -52,7 +44,7 @@ public class CompanyController {
 
     @Operation(summary = "Create product")
     @PostMapping("/create-product")
-    public ResponseEntity<?> createProduct(@RequestBody @Valid CreateProductDto createProductDto, BindingResult bindingResult) throws ExecutionException, InterruptedException {
+    public ResponseEntity<ApiResponse> createProduct(@RequestBody @Valid CreateProductDto createProductDto, BindingResult bindingResult) throws ExecutionException, InterruptedException {
         if (bindingResult.hasFieldErrors()) {
             String errors = getFieldsErrors(bindingResult);
             return ResponseEntity.badRequest().body(new ApiResponse(false, errors));
@@ -63,22 +55,7 @@ public class CompanyController {
             throw new CompanyNotFoundException();
         }
 
-        var futureProduct = new SendCreateProductEvent(
-                createProductDto.getName(),
-                createProductDto.getDescription(),
-                createProductDto.getCompanyId(),
-                createProductDto.getPrice()
-        );
-
-        ProducerRecord<String, SendCreateProductEvent> record = new ProducerRecord<>(
-                "send-create-product",
-                futureProduct
-        );
-
-        SendResult<String, SendCreateProductEvent> result = sendCreateProductEvent
-                .send(record).get();
-
-        LOGGER.info("Sent event: {}", result);
+        companyKafkaProducer.sendCreateProduct(createProductDto);
 
         CompletableFuture<List<String>> future = new CompletableFuture<>();
         companyKafkaListenerFutureWaiter.setInvalidProductFields(future);
@@ -92,7 +69,7 @@ public class CompanyController {
     }
 
     @KafkaListener(topics = "send-product-duplicate-detected", groupId = "org-deli-queuing-product")
-    public void consumeSendProductDuplicateDetected(SendProductDataHaveProblemsEvent problemsEvent) {
+    public void consumeSendProductDuplicateDetected(ProductDataHaveProblemsEvent problemsEvent) {
         CompletableFuture<List<String>> future = companyKafkaListenerFutureWaiter.getInvalidProductFields();
         future.complete(problemsEvent.invalidFields());
     }

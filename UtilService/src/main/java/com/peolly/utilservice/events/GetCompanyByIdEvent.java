@@ -1,9 +1,8 @@
 package com.peolly.utilservice.events;
 
 import java.io.Serializable;
-import java.util.UUID;
 
-public record SendUserIdEvent(
-        UUID userId)
+public record GetCompanyByIdEvent(
+        Long companyId)
 implements Serializable {
 }

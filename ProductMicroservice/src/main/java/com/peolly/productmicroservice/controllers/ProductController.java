@@ -1,16 +1,23 @@
 package com.peolly.productmicroservice.controllers;
 
+import com.peolly.productmicroservice.dto.ProductDto;
 import com.peolly.productmicroservice.exceptions.IncorrectSearchPath;
 import com.peolly.productmicroservice.services.ProductService;
 import com.peolly.utilservice.ApiResponse;
 import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @RestController
@@ -18,7 +25,6 @@ import java.util.stream.Collectors;
 @RequestMapping("/store")
 @Tag(name = "Store main page")
 public class ProductController {
-
     @Value("${PRODUCTS_PER_PAGE}")
     private Integer productsPerPage;
 
@@ -33,16 +39,16 @@ public class ProductController {
         throw new IncorrectSearchPath();
     }
 
-//    @Operation(summary = "Get all products in the store")
-//    @GetMapping()
-//    public List<ProductDTO> getAllProducts(@RequestParam(value = "page", defaultValue = "0", required = false) Integer page,
-//                                           @RequestParam(value = "company", required = false) String organizationName) {
-//        if (organizationName != null) {
-//            return productsService.findProductsByOrganizationNameWithPagination(organizationName, page, productsPerPage);
-//        } else {
-//            return productsService.productsPagination(page, productsPerPage);
-//        }
-//    }
+    @Operation(summary = "Get all products in the store")
+    @GetMapping()
+    public List<ProductDto> getAllProducts(@RequestParam(value = "page", defaultValue = "0", required = false) int page,
+                                           @RequestParam(value = "companyId", required = false) Long companyId) throws ExecutionException, InterruptedException {
+        if (companyId != null) {
+            return productsService.findProductsByCompanyIdWithPagination(companyId, page, productsPerPage);
+        } else {
+            return productsService.productsPagination(page, productsPerPage);
+        }
+    }
 //
 //    @Operation(summary = "Shows one product by its id")
 //    @GetMapping("/product/{id}")

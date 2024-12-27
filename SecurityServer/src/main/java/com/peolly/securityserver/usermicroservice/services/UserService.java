@@ -1,9 +1,9 @@
 package com.peolly.securityserver.usermicroservice.services;
 
 import com.peolly.securityserver.usermicroservice.enums.UserRole;
-import com.peolly.securityserver.usermicroservice.exceptions.IncorrectRoleInput;
-import com.peolly.securityserver.usermicroservice.exceptions.MissingRoleException;
-import com.peolly.securityserver.usermicroservice.exceptions.RepeatedRoleException;
+import com.peolly.securityserver.exceptions.IncorrectRoleInput;
+import com.peolly.securityserver.exceptions.MissingRoleException;
+import com.peolly.securityserver.exceptions.RepeatedRoleException;
 import com.peolly.securityserver.usermicroservice.model.User;
 import com.peolly.securityserver.usermicroservice.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;

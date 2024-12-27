@@ -1,19 +1,14 @@
 package com.peolly.utilservice.events;
 
-import lombok.*;
-
+import java.io.Serializable;
 import java.util.UUID;
 
-@AllArgsConstructor
-@NoArgsConstructor
-@Getter
-@Setter
-@Builder
-public class SavePaymentMethodEvent {
-    private UUID userId;
-    private String cardNumber;
-    private String monthExpiration;
-    private String yearExpiration;
-    private int cvv;
-    private Double availableMoney;
+public record SavePaymentMethodEvent (
+    UUID userId,
+    String cardNumber,
+    String monthExpiration,
+    String yearExpiration,
+    int cvv,
+    Double availableMoney)
+implements Serializable {
 }

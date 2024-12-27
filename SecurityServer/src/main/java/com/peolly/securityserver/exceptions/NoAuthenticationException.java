@@ -1,4 +1,4 @@
-package com.peolly.securityserver.usermicroservice.exceptions;
+package com.peolly.securityserver.exceptions;
 
 import java.io.IOException;
 

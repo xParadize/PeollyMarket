@@ -1,23 +1,14 @@
 package com.peolly.securityserver.securityserver.services;
 
-import com.peolly.securityserver.securityserver.models.JwtAuthenticationResponse;
+import com.peolly.securityserver.exceptions.EmailConfirmationTokenExpiredException;
+import com.peolly.securityserver.kafka.SecurityKafkaProducer;
+import com.peolly.securityserver.securityserver.models.*;
 import com.peolly.securityserver.securityserver.util.NameGenerator;
-import com.peolly.securityserver.securityserver.models.RefreshTokenRequest;
-import com.peolly.securityserver.securityserver.models.RefreshToken;
-import com.peolly.securityserver.securityserver.models.SignInRequest;
-import com.peolly.securityserver.securityserver.models.SignUpRequest;
-import com.peolly.securityserver.securityserver.models.TemporaryUser;
 import com.peolly.securityserver.usermicroservice.enums.UserRole;
 import com.peolly.securityserver.usermicroservice.model.User;
 import com.peolly.securityserver.usermicroservice.services.AuthDeviceInfoService;
 import com.peolly.securityserver.usermicroservice.services.UserService;
-import com.peolly.utilservice.events.SendUserCreatedEvent;
 import lombok.RequiredArgsConstructor;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.SendResult;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -30,41 +21,32 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
-
     private final UserService userService;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final TempUserService tempUserService;
-//    private final EmailConfirmationService emailConfirmationService;
-//    private final MailService mailService;
     private final RefreshTokenService refreshTokenService;
-//    private final NotificationService notificationService;
     private final NameGenerator nameGenerator;
     private final AuthDeviceInfoService authDeviceInfoService;
+    private final SecurityKafkaProducer securityKafkaProducer;
 
-    private final KafkaTemplate<String, SendUserCreatedEvent> sendUserCreatedEmailEvent;
-
-    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
-
-    public void createTempUser(SignUpRequest request) throws ExecutionException, InterruptedException {
+    public void createTempUser(SignUpRequest request) {
         var tempUser = TemporaryUser.builder()
                 .id(UUID.randomUUID())
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .build();
-        tempUserService.create(tempUser);
+        tempUserService.createTempUser(tempUser);
     }
 
     @Transactional
     public JwtAuthenticationResponse enableUser(TemporaryUser temporaryUser) {
-
         User userToSave = convertTempUserToUser(temporaryUser);
         userService.saveUser(userToSave);
         tempUserService.deleteTempUserById(temporaryUser.getId());
@@ -90,7 +72,6 @@ public class AuthenticationService {
     }
 
     private User convertTempUserToUser(TemporaryUser request) {
-
         var user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
@@ -108,8 +89,6 @@ public class AuthenticationService {
      * @return токен
      */
     public JwtAuthenticationResponse signIn(SignInRequest request) {
-
-
         Authentication authentication = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
@@ -134,35 +113,18 @@ public class AuthenticationService {
     }
 
     @Transactional
-    public String confirmEmailToken(String token) throws ExecutionException, InterruptedException {
-
+    public String confirmEmailToken(String token) {
         TemporaryUser temporaryUser = tempUserService.findTempUserById(UUID.fromString(token))
-                .orElse(null);
+                .orElseThrow(EmailConfirmationTokenExpiredException::new);
 
-        if (temporaryUser == null) {
-            return "Email link has been expired";
-        }
-
-        var registeredUserData = SendUserCreatedEvent.builder()
-                .userToken(token)
-                .email(temporaryUser.getEmail())
-                .username(temporaryUser.getUsername())
-                .build();
-
-        ProducerRecord<String, SendUserCreatedEvent> record = new ProducerRecord<>(
-                "send-user-created-email",
-                token,
-                registeredUserData
-        );
-        SendResult<String, SendUserCreatedEvent> result = sendUserCreatedEmailEvent
-                .send(record).get();
-        LOGGER.info("Sent event to topic 'send-user-created-email': {}", result);
+        securityKafkaProducer.sendEmailConfirmed(token, temporaryUser);
 
         JwtAuthenticationResponse response = enableUser(temporaryUser);
 
         return response.getAccessToken();
     }
 
+    @Transactional
     public JwtAuthenticationResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
         RefreshToken oldRefreshToken = refreshTokenService.findRefreshTokenByToken(refreshTokenRequest.getRefreshToken());
         User user = userService.findById(oldRefreshToken.getUserId());

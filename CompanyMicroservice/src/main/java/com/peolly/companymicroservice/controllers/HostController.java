@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/")
 public class HostController {
-
     @Hidden
     @RequestMapping(value = "*")
     public ResponseEntity<ApiResponse> handleNotFound() {

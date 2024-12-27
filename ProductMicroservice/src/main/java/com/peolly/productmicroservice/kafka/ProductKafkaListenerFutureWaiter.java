@@ -1,5 +1,6 @@
 package com.peolly.productmicroservice.kafka;
 
+import com.peolly.utilservice.events.GetCompanyByIdResponseEvent;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.stereotype.Service;
@@ -11,5 +12,5 @@ import java.util.concurrent.CompletableFuture;
 @Setter
 @Service
 public class ProductKafkaListenerFutureWaiter {
-
+    private CompletableFuture<GetCompanyByIdResponseEvent> companyIdResponse;
 }

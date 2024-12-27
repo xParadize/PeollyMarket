@@ -19,6 +19,11 @@ spring:
         ddl-auto: update
       show-sql: true
 
+products:
+  per:
+    page:
+      ${PRODUCTS_PER_PAGE}
+
 empty:
   product:
     filename:
