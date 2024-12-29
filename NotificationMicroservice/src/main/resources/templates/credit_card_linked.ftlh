@@ -33,7 +33,6 @@
 <body>
 <div id="body">
     <div id="div">
-        <p>Hello, ${name}!</p>
         <p>Your credit card ${card_number} has been successfully linked to your account.</p>
     </div>
 </div>

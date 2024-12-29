@@ -49,9 +49,10 @@ public class SecurityKafkaProducer {
         LOGGER.info("message written at topic '{}': {} = {}", record.topic(), record.key(), record.value());
     }
 
-    public void sendAddPaymentMethod(UUID userId, CardData cardData) {
+    public void sendAddPaymentMethod(UUID userId, String email, CardData cardData) {
         SavePaymentMethodEvent event = new SavePaymentMethodEvent(
                 userId,
+                email,
                 cardData.getCardNumber(),
                 cardData.getMonthExpiration(),
                 cardData.getYearExpiration(),
@@ -59,7 +60,7 @@ public class SecurityKafkaProducer {
                 cardData.getAvailableMoney());
         ProducerRecord<String, SavePaymentMethodEvent> record = new ProducerRecord<>(
                 "send-save-payment-method",
-                userId.toString(),
+                "Security Microservice",
                 event
         );
         sendSavePaymentMethodEvent.send(record);

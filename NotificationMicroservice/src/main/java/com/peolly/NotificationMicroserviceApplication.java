@@ -4,8 +4,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class EmailMicroserviceApplication {
+public class NotificationMicroserviceApplication {
     public static void main(String[] args) {
-        SpringApplication.run(EmailMicroserviceApplication.class);
+        SpringApplication.run(NotificationMicroserviceApplication.class);
     }
 }

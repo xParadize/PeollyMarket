@@ -79,28 +79,17 @@ public class ProfileController {
     @PostMapping("/add-payment-method")
     public ResponseEntity<ApiResponse> addPaymentMethod(@RequestBody @Valid CardData cardData,
                                                         BindingResult bindingResult,
-                                                        Principal actualUser) throws ExecutionException, InterruptedException {
+                                                        Principal actualUser) {
         if (bindingResult.hasFieldErrors()) {
             String errors = getFieldsErrors(bindingResult);
             return new ResponseEntity<>(new ApiResponse(false, errors), HttpStatus.BAD_REQUEST);
         }
 
         User requestUser = usersService.findByUsername(actualUser.getName());
-        UUID userId = requestUser.getId();
 
-        securityKafkaProducer.sendAddPaymentMethod(userId, cardData);
+        securityKafkaProducer.sendAddPaymentMethod(requestUser.getId(), requestUser.getEmail(), cardData);
+        return new ResponseEntity<>(new ApiResponse(true, "Card sent to validation."), HttpStatus.OK);
 
-        CompletableFuture<PaymentMethodWasNotAddedEvent> future = new CompletableFuture<>();
-        securityKafkaListenerFutureWaiter.setWasPaymentMethodAddedFuture(future);
-
-        List<String> errorField = invalidCardDataProcessor.getCardInvalidFields(future.get());
-        boolean isCardDataValid = future.get().successful();
-        if (isCardDataValid) {
-            return new ResponseEntity<>(new ApiResponse(true, "Payment method added"), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(new ApiResponse(false, errorField.toString()), HttpStatus.BAD_REQUEST);
-
-        }
     }
 
     @KafkaListener(topics = "send-was-payment-method-added", groupId = "org-deli-queuing-security")

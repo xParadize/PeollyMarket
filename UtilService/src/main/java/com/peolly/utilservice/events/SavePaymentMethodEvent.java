@@ -5,6 +5,7 @@ import java.util.UUID;
 
 public record SavePaymentMethodEvent (
     UUID userId,
+    String email,
     String cardNumber,
     String monthExpiration,
     String yearExpiration,

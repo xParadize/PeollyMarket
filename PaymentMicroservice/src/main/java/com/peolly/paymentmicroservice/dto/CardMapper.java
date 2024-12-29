@@ -11,6 +11,7 @@ import org.mapstruct.ReportingPolicy;
         componentModel = MappingConstants.ComponentModel.SPRING)
 public interface CardMapper {
     @Mapping(target = "userId", ignore = true)
+//    @Mapping(target = "email", ignore = true)
     Card toEntity(CardDto dto);
     CardDto toDto(Card card);
     CardDto toDto(SavePaymentMethodEvent event);

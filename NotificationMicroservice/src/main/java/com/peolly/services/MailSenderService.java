@@ -15,7 +15,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class MailService {
+public class MailSenderService {
     private final Configuration configuration;
     private final JavaMailSender mailSender;
 
@@ -60,27 +60,43 @@ public class MailService {
         configuration.getTemplate("register.ftlh").process(model, writer);
         return writer.getBuffer().toString();
     }
-//
-//    @SneakyThrows
-//    public void sendCreditCartLinkedEmail(User user, String cardNumber) {
-//        MimeMessage mimeMessage = mailSender.createMimeMessage();
-//        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, false, "UTF-8");
-//        helper.setSubject(String.format("Hello, %s!", user.getUsername()));
-//        helper.setTo(user.getEmail());
-//        String emailContent = getCreditCartLinkedEmailContent(user, cardNumber);
-//        helper.setText(emailContent, true);
-//        mailSender.send(mimeMessage);
-//    }
-//
-//    @SneakyThrows
-//    private String getCreditCartLinkedEmailContent(User user, String cardNumber) {
-//        StringWriter writer = new StringWriter();
-//        Map<String, Object> model = new HashMap<>();
-//        model.put("name", user.getUsername());
-//        model.put("card_number", "*" + cardNumber.substring(cardNumber.length() - 4));
-//        configuration.getTemplate("credit_card_linked.ftlh").process(model, writer);
-//        return writer.getBuffer().toString();
-//    }
+
+    @SneakyThrows
+    public void sendCreditCartLinkedEmail(String email, String cardNumber, boolean isCardDataValid) {
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, false, "UTF-8");
+        helper.setTo(email);
+        
+        String emailContent;
+        if (isCardDataValid) {
+            // TODO: сделать динамические хедер и месседж из сервиса чтобы одно и то же сообщение
+            //  разлеталось с одинаковым контентом по всем местам
+            //  и типа через модель тут добавить
+            emailContent = getCreditCartLinkedEmailContent(cardNumber);
+        } else {
+            emailContent = getCreditCartWasNotLinkedEmailContent();
+        }
+        helper.setText(emailContent, true);
+        mailSender.send(mimeMessage);
+    }
+
+    @SneakyThrows
+    private String getCreditCartLinkedEmailContent(String cardNumber) {
+        StringWriter writer = new StringWriter();
+        Map<String, Object> model = new HashMap<>();
+        model.put("card_number", "*" + cardNumber.substring(cardNumber.length() - 4));
+        configuration.getTemplate("credit_card_linked.ftlh").process(model, writer);
+        return writer.getBuffer().toString();
+    }
+
+    @SneakyThrows
+    private String getCreditCartWasNotLinkedEmailContent() {
+        StringWriter writer = new StringWriter();
+        Map<String, Object> model = new HashMap<>();
+        configuration.getTemplate("credit_card_was_not_linked.ftlh").process(model, writer);
+        return writer.getBuffer().toString();
+    }
+
 //    @Async
 //    @SneakyThrows
 //    public void sendTicketCreated(User user) {

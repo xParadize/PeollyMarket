@@ -8,7 +8,7 @@ spring:
     import: optional:file:.env[.properties]
   datasource:
     username: "xparadize"
-    url: jdbc:postgresql://localhost:5432/EmailMicroservice
+    url: jdbc:postgresql://localhost:5432/NotificationMicroservice
     password: "password"
     jpa:
       properties:

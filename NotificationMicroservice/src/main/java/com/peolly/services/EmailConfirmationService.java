@@ -16,10 +16,10 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class EmailConfirmationService {
     private final EmailConfirmationRepository emailConfirmationRepository;
-    private final MailService mailService;
+    private final MailSenderService mailService;
 
     @Transactional
-    @KafkaListener(topics = "send-email-confirmation-token", groupId = "org-deli-queuing-email")
+    @KafkaListener(topics = "send-email-confirmation-token", groupId = "org-deli-queuing-notification")
     public void consumeEmailConfirmationTokenEvent(EmailConfirmationTokenEvent emailConfirmationTokenEvent) {
         var confirmation = EmailConfirmation.builder()
                 .token(emailConfirmationTokenEvent.email())
@@ -31,7 +31,7 @@ public class EmailConfirmationService {
     }
 
     @Transactional
-    @KafkaListener(topics = "send-user-created-email", groupId = "org-deli-queuing-email")
+    @KafkaListener(topics = "send-user-created-email", groupId = "org-deli-queuing-notification")
     public void consumeUserCreatedEvent(UserCreatedEvent userCreatedEvent) {
         setConfirmedAt(userCreatedEvent.userToken());
         mailService.sendRegistrationEmail(

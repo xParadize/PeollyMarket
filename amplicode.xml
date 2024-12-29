@@ -7,7 +7,7 @@
           <package value="com.peolly.securityserver" />
         </packages>
       </persistence-unit>
-      <persistence-unit moduleName="EmailMicroservice" name="Default">
+      <persistence-unit moduleName="NotificationMicroservice" name="Default">
         <packages>
           <package value="com.peolly" />
         </packages>

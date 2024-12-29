@@ -4,7 +4,6 @@ import com.peolly.paymentmicroservice.dto.CardDto;
 import com.peolly.paymentmicroservice.dto.CardMapper;
 import com.peolly.paymentmicroservice.dto.UncheckedCardMapper;
 import com.peolly.paymentmicroservice.kafka.PaymentKafkaProducer;
-import com.peolly.paymentmicroservice.models.CardValidationErrorFields;
 import com.peolly.paymentmicroservice.models.UncheckedCard;
 import com.peolly.paymentmicroservice.repositories.UncheckedCardRepository;
 import com.peolly.utilservice.events.SavePaymentMethodEvent;
@@ -31,25 +30,25 @@ public class UncheckedCardService {
         CardDto uncheckedCardData = convertEventToDto(event);
         saveUncheckedCard(uncheckedCardData);
 
-        CardValidationErrorFields validationResult = dataValidator.isCardValid(uncheckedCardData, event.userId());
-        if (validationResult.isCardDataValid()) {
-            processSuccessfulSavingPaymentMethod(uncheckedCardData, event.userId(), validationResult);
+        boolean isCardDataValid = dataValidator.isCardValid(uncheckedCardData, event.userId());
+        if (isCardDataValid) {
+            processSuccessfulSavingPaymentMethod(uncheckedCardData, event.userId(), event.email());
         } else {
-            processUnsuccessfulSavingPaymentMethod(uncheckedCardData.getCardNumber(), event.userId(), validationResult);
+            processUnsuccessfulSavingPaymentMethod(uncheckedCardData, event.userId(), event.email());
         }
     }
 
     @Transactional
-    public void processSuccessfulSavingPaymentMethod(CardDto cardDto, UUID userId, CardValidationErrorFields errorFields) {
+    public void processSuccessfulSavingPaymentMethod(CardDto cardDto, UUID userId, String email) {
         cardService.savePaymentMethod(cardDto, userId);
         deleteUncheckedCardById(cardDto.getCardNumber());
-        paymentKafkaProducer.sendWasPaymentMethodAdded(userId, errorFields);
+        paymentKafkaProducer.sendPaymentMethodValidationResult(true, userId, email, cardDto.getCardNumber());
     }
 
     @Transactional
-    public void processUnsuccessfulSavingPaymentMethod(String cardNumber, UUID userId, CardValidationErrorFields errorFields) {
-        deleteUncheckedCardById(cardNumber);
-        paymentKafkaProducer.sendWasPaymentMethodAdded(userId, errorFields);
+    public void processUnsuccessfulSavingPaymentMethod(CardDto cardDto, UUID userId, String email) {
+        deleteUncheckedCardById(cardDto.getCardNumber());
+        paymentKafkaProducer.sendPaymentMethodValidationResult(false, userId, email, cardDto.getCardNumber());
     }
 
     @Transactional
