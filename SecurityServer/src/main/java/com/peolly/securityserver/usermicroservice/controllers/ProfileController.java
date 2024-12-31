@@ -19,6 +19,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
@@ -79,9 +80,8 @@ public class ProfileController {
         }
 
         User requestUser = usersService.findByUsername(actualUser.getName());
-        UUID userId = requestUser.getId();
 
-        securityKafkaProducer.sendAddPaymentMethod(userId, cardData);
+        securityKafkaProducer.sendAddPaymentMethod(requestUser.getId(), requestUser.getEmail(), cardData);
         return new ResponseEntity<>(new ApiResponse(true, "Card sent to validation."), HttpStatus.OK);
     }
 

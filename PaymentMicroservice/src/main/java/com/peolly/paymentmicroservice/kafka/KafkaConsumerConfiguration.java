@@ -3,6 +3,7 @@ package com.peolly.paymentmicroservice.kafka;
 import com.peolly.paymentmicroservice.exceptions.NonRetryableException;
 import com.peolly.paymentmicroservice.exceptions.RetryableException;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
+import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,11 +49,11 @@ public class KafkaConsumerConfiguration {
     public ConsumerFactory<String, Object> consumerFactory() {
         Map<String, Object> config = new HashMap<>();
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, keyDeserializer);
+        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
         config.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, KafkaAvroDeserializer.class);
-        config.put("schema.registry.url", schemaRegistryUrl);
-        config.put("specific.avro.reader", true);
+        config.put(KafkaAvroDeserializerConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
+        config.put(KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG, true);
         config.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         config.put(JsonDeserializer.TRUSTED_PACKAGES, trustedPackages);
         return new DefaultKafkaConsumerFactory<>(config);

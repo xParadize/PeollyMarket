@@ -134,6 +134,11 @@
             <artifactId>kafka-schema-registry-client</artifactId>
             <version>7.5.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.peolly</groupId>
+            <artifactId>schema-registry</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <dependencyManagement>
@@ -174,7 +179,7 @@
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
-                            <version>1.18.24</version>
+                            <version>1.18.30</version>
                         </path>
                         <!-- This is needed when using Lombok 1.18.16 and above -->
                         <path>

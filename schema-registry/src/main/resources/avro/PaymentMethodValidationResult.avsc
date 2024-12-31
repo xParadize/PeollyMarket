@@ -1,0 +1,33 @@
+{
+  "type": "record",
+  "name": "PaymentMethodValidationResult",
+  "namespace": "com.peolly.schemaregistry",
+  "fields": [
+    {
+      "name": "valid",
+      "type": "boolean"
+    },
+    {
+      "name": "userId",
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      }
+    },
+    {
+      "name": "email",
+      "type": "string"
+    },
+    {
+      "name": "cardNumber",
+      "type": "string"
+    },
+    {
+      "name": "timestamp",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      }
+    }
+  ]
+}

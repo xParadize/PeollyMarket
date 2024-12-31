@@ -1,9 +1,9 @@
 package com.peolly.productmicroservice.controllers;
 
+import com.peolly.productmicroservice.dto.ApiResponse;
 import com.peolly.productmicroservice.dto.ProductDto;
 import com.peolly.productmicroservice.exceptions.IncorrectSearchPath;
 import com.peolly.productmicroservice.services.ProductService;
-import com.peolly.utilservice.ApiResponse;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,16 +39,16 @@ public class ProductController {
         throw new IncorrectSearchPath();
     }
 
-    @Operation(summary = "Get all products in the store")
-    @GetMapping()
-    public List<ProductDto> getAllProducts(@RequestParam(value = "page", defaultValue = "0", required = false) int page,
-                                           @RequestParam(value = "companyId", required = false) Long companyId) throws ExecutionException, InterruptedException {
-        if (companyId != null) {
-            return productsService.findProductsByCompanyIdWithPagination(companyId, page, productsPerPage);
-        } else {
-            return productsService.productsPagination(page, productsPerPage);
-        }
-    }
+//    @Operation(summary = "Get all products in the store")
+//    @GetMapping()
+//    public List<ProductDto> getAllProducts(@RequestParam(value = "page", defaultValue = "0", required = false) int page,
+//                                           @RequestParam(value = "companyId", required = false) Long companyId) throws ExecutionException, InterruptedException {
+//        if (companyId != null) {
+//            return productsService.findProductsByCompanyIdWithPagination(companyId, page, productsPerPage);
+//        } else {
+//            return productsService.productsPagination(page, productsPerPage);
+//        }
+//    }
 //
 //    @Operation(summary = "Shows one product by its id")
 //    @GetMapping("/product/{id}")

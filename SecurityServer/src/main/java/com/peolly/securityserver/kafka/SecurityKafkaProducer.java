@@ -1,5 +1,6 @@
 package com.peolly.securityserver.kafka;
 
+import com.peolly.schemaregistry.SavePaymentMethodEvent;
 import com.peolly.securityserver.securityserver.models.TemporaryUser;
 import com.peolly.securityserver.usermicroservice.dto.CardData;
 import com.peolly.securityserver.usermicroservice.dto.DeleteCardDto;
@@ -53,18 +54,16 @@ public class SecurityKafkaProducer {
 //        LOGGER.info("message written at topic '{}': {} = {}", record.topic(), record.key(), record.value());
 //    }
 
-    public void sendAddPaymentMethod(UUID userId, CardData cardData) throws IOException {
-
-        Schema schema = new Schema.Parser().parse(new File("avro-schemas/SavePaymentMethodEvent.avsc"));
-
-        SavePaymentMethodEvent = SavePaymentMethodEvent.newBuilder()
-                .setUserId(userId.toString())
-                .setCardNumber(cardData.getCardNumber())
-                .setMonthExpiration(cardData.getMonthExpiration())
-                .setYearExpiration(cardData.getYearExpiration())
-                .setCvv(cardData.getCvv())
-                .setAvailableMoney(cardData.getAvailableMoney())
-                .build();
+    public void sendAddPaymentMethod(UUID userId, String email, CardData cardData) {
+         SavePaymentMethodEvent event = SavePaymentMethodEvent.newBuilder()
+                 .setUserId(userId)
+                 .setEmail(email)
+                 .setCardNumber(cardData.getCardNumber())
+                 .setMonthExpiration(cardData.getMonthExpiration())
+                 .setYearExpiration(cardData.getYearExpiration())
+                 .setCvv(cardData.getCvv())
+                 .setAvailableMoney(cardData.getAvailableMoney())
+                 .build();
         ProducerRecord<String, GenericRecord> record = new ProducerRecord<>(
                 "send-save-payment-method",
                 userId.toString(),
