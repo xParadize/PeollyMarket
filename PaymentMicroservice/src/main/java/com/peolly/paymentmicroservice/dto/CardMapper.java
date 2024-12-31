@@ -1,7 +1,7 @@
 package com.peolly.paymentmicroservice.dto;
 
 import com.peolly.paymentmicroservice.models.Card;
-import org.deli.queuing.payment.SavePaymentMethodEvent;
+import com.peolly.schemaregistry.SavePaymentMethodEvent;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;

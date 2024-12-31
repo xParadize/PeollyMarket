@@ -32,12 +32,10 @@ public class CardService {
 
     @Transactional
     public void savePaymentMethod(CardDto dto, UUID userId) {
-        System.out.println(dto.getCardNumber());
         Card cardToSave = convertDtoToCard(dto);
         cardToSave.setUserId(userId);
         cardToSave.setCardType(getCardType(dto.getCardNumber()).toString());
         cardRepository.save(cardToSave);
-        // mailService.sendCreditCartLinkedEmail(user, dto.getCardNumber());
     }
 
     @Transactional

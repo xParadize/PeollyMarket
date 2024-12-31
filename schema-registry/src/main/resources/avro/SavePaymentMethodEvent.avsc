@@ -1,0 +1,38 @@
+{
+  "type": "record",
+  "name": "SavePaymentMethodEvent",
+  "namespace": "com.peolly.schemaregistry",
+  "fields": [
+    {
+      "name": "userId",
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      }
+    },
+    {
+      "name": "email",
+      "type": "string"
+    },
+    {
+      "name": "cardNumber",
+      "type": "string"
+    },
+    {
+      "name": "monthExpiration",
+      "type": "string"
+    },
+    {
+      "name": "yearExpiration",
+      "type": "string"
+    },
+    {
+      "name": "cvv",
+      "type": "int"
+    },
+    {
+      "name": "availableMoney",
+      "type": "double"
+    }
+  ]
+}

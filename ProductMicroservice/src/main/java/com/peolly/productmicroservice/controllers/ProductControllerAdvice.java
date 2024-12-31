@@ -1,9 +1,9 @@
 package com.peolly.productmicroservice.controllers;
 
+import com.peolly.productmicroservice.dto.ApiResponse;
 import com.peolly.productmicroservice.exceptions.CompanyHasNoProductsException;
 import com.peolly.productmicroservice.exceptions.CompanyNotFoundException;
 import com.peolly.productmicroservice.exceptions.IncorrectSearchPath;
-import com.peolly.utilservice.ApiResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,7 +1,6 @@
 package com.peolly.productmicroservice.dto;
 
 import com.peolly.productmicroservice.models.Product;
-import com.peolly.utilservice.events.SavePaymentMethodEvent;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.ReportingPolicy;
@@ -11,5 +10,5 @@ import org.mapstruct.ReportingPolicy;
 public interface ProductMapper {
     Product toEntity(ProductDto productDto);
     ProductDto toDto(Product product);
-    ProductDto toDto(SavePaymentMethodEvent event);
+//    ProductDto toDto(SavePaymentMethodEvent event);
 }

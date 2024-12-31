@@ -17,10 +17,11 @@
     <modules>
         <module>ConfigServer</module>
         <module>UtilService</module>
-        <module>EmailMicroservice</module>
         <module>PaymentMicroservice</module>
         <module>ProductMicroservice</module>
         <module>CompanyMicroservice</module>
+        <module>schema-registry</module>
+        <module>NotificationMicroservice</module>
     </modules>
 
     <properties>

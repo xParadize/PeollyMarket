@@ -7,14 +7,19 @@
           <package value="com.peolly.securityserver" />
         </packages>
       </persistence-unit>
-      <persistence-unit moduleName="EmailMicroservice" name="Default">
-        <packages>
-          <package value="com.peolly" />
-        </packages>
-      </persistence-unit>
       <persistence-unit moduleName="PaymentMicroservice" name="Default">
         <packages>
           <package value="com.peolly.paymentmicroservice" />
+        </packages>
+      </persistence-unit>
+      <persistence-unit moduleName="CompanyMicroservice" name="Default">
+        <packages>
+          <package value="com.peolly.companymicroservice" />
+        </packages>
+      </persistence-unit>
+      <persistence-unit moduleName="ProductMicroservice" name="Default">
+        <packages>
+          <package value="com.peolly.productmicroservice" />
         </packages>
       </persistence-unit>
     </persistence-units>

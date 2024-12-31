@@ -10,8 +10,6 @@ import com.peolly.productmicroservice.kafka.ProductKafkaProducer;
 import com.peolly.productmicroservice.models.Product;
 import com.peolly.productmicroservice.repositories.ProductRepository;
 import com.peolly.productmicroservice.util.ProductDataValidator;
-import com.peolly.utilservice.events.CreateProductEvent;
-import com.peolly.utilservice.events.GetCompanyByIdResponseEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -36,31 +34,31 @@ public class ProductService {
     private final ProductMapper productMapper;
     private final ProductKafkaListenerFutureWaiter productKafkaListenerFutureWaiter;
 
-    @Transactional
-    @KafkaListener(topics = "send-create-product", groupId = "org-deli-queuing-company")
-    public void createProduct(CreateProductEvent createProductEvent) {
-        List<String> invalidFields = productDataValidator.validateProductData(
-                createProductEvent.name(), createProductEvent.description());
-
-        if (!invalidFields.isEmpty()) {
-            sendProductDataHaveProblemsEvent(invalidFields);
-        } else {
-            Product product = Product.builder()
-                    .name(createProductEvent.name())
-                    .description(createProductEvent.description())
-                    .image(emptyProductFile)
-                    .companyId(createProductEvent.companyId())
-                    .price(createProductEvent.price())
-                    .storageAmount(0)
-                    .evaluation(0.0)
-                    .build();
-            productRepository.save(product);
-            sendProductDataHaveProblemsEvent(Collections.emptyList());
-        }
-    }
+//    @Transactional
+//    @KafkaListener(topics = "send-create-product", groupId = "org-deli-queuing-company")
+//    public void createProduct(CreateProductEvent createProductEvent) {
+//        List<String> invalidFields = productDataValidator.validateProductData(
+//                createProductEvent.name(), createProductEvent.description());
+//
+//        if (!invalidFields.isEmpty()) {
+//            sendProductDataHaveProblemsEvent(invalidFields);
+//        } else {
+//            Product product = Product.builder()
+//                    .name(createProductEvent.name())
+//                    .description(createProductEvent.description())
+//                    .image(emptyProductFile)
+//                    .companyId(createProductEvent.companyId())
+//                    .price(createProductEvent.price())
+//                    .storageAmount(0)
+//                    .evaluation(0.0)
+//                    .build();
+//            productRepository.save(product);
+//            sendProductDataHaveProblemsEvent(Collections.emptyList());
+//        }
+//    }
 
     private void sendProductDataHaveProblemsEvent(List<String> invalidFields) {
-        productKafkaProducer.sendEmailConfirmed(invalidFields);
+        // productKafkaProducer.sendEmailConfirmed(invalidFields);
     }
 
     @Transactional(readOnly = true)
@@ -74,35 +72,35 @@ public class ProductService {
         return productsToReturn;
     }
 
-    @Transactional(readOnly = true)
-    public List<ProductDto> findProductsByCompanyIdWithPagination(Long companyId, int page, int productsPerPage)
-            throws ExecutionException, InterruptedException {
-        int offset = calculatePageOffset(page, productsPerPage);
-
-        GetCompanyByIdResponseEvent companyData = fetchCompanyData(companyId);
-        validateCompanyHasProducts(companyData.companyId());
-
-        List<Product> products = fetchProductsForPage(companyData.companyId(), offset, productsPerPage);
-        validatePageHasProducts(products);
-
-        return convertProductsToDtos(products);
-    }
+//    @Transactional(readOnly = true)
+//    public List<ProductDto> findProductsByCompanyIdWithPagination(Long companyId, int page, int productsPerPage)
+//            throws ExecutionException, InterruptedException {
+//        int offset = calculatePageOffset(page, productsPerPage);
+//
+//        GetCompanyByIdResponseEvent companyData = fetchCompanyData(companyId);
+//        validateCompanyHasProducts(companyData.companyId());
+//
+//        List<Product> products = fetchProductsForPage(companyData.companyId(), offset, productsPerPage);
+//        validatePageHasProducts(products);
+//
+//        return convertProductsToDtos(products);
+//    }
 
     private int calculatePageOffset(int page, int productsPerPage) {
         return page * productsPerPage;
     }
 
-    private GetCompanyByIdResponseEvent fetchCompanyData(Long companyId) throws ExecutionException, InterruptedException {
-        productKafkaProducer.sendGetCompanyById(companyId);
-        CompletableFuture<GetCompanyByIdResponseEvent> future = new CompletableFuture<>();
-        productKafkaListenerFutureWaiter.setCompanyIdResponse(future);
-
-        GetCompanyByIdResponseEvent companyData = future.get();
-        if (companyData.companyName() == null) {
-            throw new CompanyNotFoundException();
-        }
-        return companyData;
-    }
+//    private GetCompanyByIdResponseEvent fetchCompanyData(Long companyId) throws ExecutionException, InterruptedException {
+//        productKafkaProducer.sendGetCompanyById(companyId);
+//        CompletableFuture<GetCompanyByIdResponseEvent> future = new CompletableFuture<>();
+//        productKafkaListenerFutureWaiter.setCompanyIdResponse(future);
+//
+//        GetCompanyByIdResponseEvent companyData = future.get();
+//        if (companyData.companyName() == null) {
+//            throw new CompanyNotFoundException();
+//        }
+//        return companyData;
+//    }
 
     private void validateCompanyHasProducts(Long companyId) {
         long totalProductsCount = productRepository.countProductsByCompanyId(companyId);
@@ -127,12 +125,12 @@ public class ProductService {
                 .toList();
     }
 
-    @Transactional
-    @KafkaListener(topics = "send-get-company-by-id-response", groupId = "org-deli-queuing-company")
-    public void consumeGetCompanyByIdResponseEvent(GetCompanyByIdResponseEvent event) {
-        CompletableFuture<GetCompanyByIdResponseEvent> future = productKafkaListenerFutureWaiter.getCompanyIdResponse();
-        future.complete(event);
-    }
+//    @Transactional
+//    @KafkaListener(topics = "send-get-company-by-id-response", groupId = "org-deli-queuing-company")
+//    public void consumeGetCompanyByIdResponseEvent(GetCompanyByIdResponseEvent event) {
+//        CompletableFuture<GetCompanyByIdResponseEvent> future = productKafkaListenerFutureWaiter.getCompanyIdResponse();
+//        future.complete(event);
+//    }
 //
 //    @Transactional(readOnly = true)
 //    public ProductDTO getProductInfo(Long productId) {

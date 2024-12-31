@@ -1,13 +1,12 @@
 package com.peolly.companymicroservice.controllers;
 
+import com.peolly.companymicroservice.dto.ApiResponse;
 import com.peolly.companymicroservice.dto.CreateProductDto;
 import com.peolly.companymicroservice.exceptions.CompanyNotFoundException;
 import com.peolly.companymicroservice.exceptions.IncorrectSearchPath;
 import com.peolly.companymicroservice.kafka.CompanyKafkaListenerFutureWaiter;
 import com.peolly.companymicroservice.kafka.CompanyKafkaProducer;
 import com.peolly.companymicroservice.services.CompanyService;
-import com.peolly.utilservice.ApiResponse;
-import com.peolly.utilservice.events.ProductDataHaveProblemsEvent;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -55,7 +54,7 @@ public class CompanyController {
             throw new CompanyNotFoundException();
         }
 
-        companyKafkaProducer.sendCreateProduct(createProductDto);
+        // companyKafkaProducer.sendCreateProduct(createProductDto);
 
         CompletableFuture<List<String>> future = new CompletableFuture<>();
         companyKafkaListenerFutureWaiter.setInvalidProductFields(future);
@@ -68,11 +67,11 @@ public class CompanyController {
                 false, String.format("Not unique product fields: %s", invalidProductFields)), HttpStatus.BAD_REQUEST);
     }
 
-    @KafkaListener(topics = "send-product-duplicate-detected", groupId = "org-deli-queuing-product")
-    public void consumeSendProductDuplicateDetected(ProductDataHaveProblemsEvent problemsEvent) {
-        CompletableFuture<List<String>> future = companyKafkaListenerFutureWaiter.getInvalidProductFields();
-        future.complete(problemsEvent.invalidFields());
-    }
+//    @KafkaListener(topics = "send-product-duplicate-detected", groupId = "org-deli-queuing-product")
+//    public void consumeSendProductDuplicateDetected(ProductDataHaveProblemsEvent problemsEvent) {
+//        CompletableFuture<List<String>> future = companyKafkaListenerFutureWaiter.getInvalidProductFields();
+//        future.complete(problemsEvent.invalidFields());
+//    }
 
 //    @PostMapping("/add")
 //    @Operation(summary = "Create company ticket")
