@@ -1,0 +1,22 @@
+{
+  "type": "record",
+  "name": "ConfirmUserEmailEvent",
+  "namespace": "com.peolly.schemaregistry",
+  "fields": [
+    {
+      "name": "token",
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      }
+    },
+    {
+      "name": "email",
+      "type": "string"
+    },
+    {
+      "name": "username",
+      "type": "string"
+    }
+  ]
+}

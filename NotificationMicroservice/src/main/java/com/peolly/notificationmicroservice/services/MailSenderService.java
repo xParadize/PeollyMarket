@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -21,7 +22,7 @@ public class MailSenderService {
 
     @Async
     @SneakyThrows
-    public void sendVerifyEmail(String email, String confirmationCode) {
+    public void sendVerifyEmail(String email, UUID confirmationCode) {
         MimeMessage mimeMessage = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, false, "UTF-8");
         helper.setSubject("To continue please confirm your email address");
@@ -32,7 +33,7 @@ public class MailSenderService {
     }
 
     @SneakyThrows
-    private String getVerifyEmail(String confirmationCode) {
+    private String getVerifyEmail(UUID confirmationCode) {
         StringWriter writer = new StringWriter();
         Map<String, Object> model = new HashMap<>();
         model.put("code", confirmationCode);

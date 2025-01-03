@@ -3,6 +3,7 @@ package com.peolly.productmicroservice.models;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.proxy.HibernateProxy;
+import org.springframework.data.redis.core.RedisHash;
 
 import java.io.Serializable;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.Objects;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+//@RedisHash(value = "Product", timeToLive = 1209600) // 2 weeks
 public class Product implements Serializable {
 
     @Id

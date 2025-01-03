@@ -17,7 +17,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
         Page<Product> findAll(Pageable var1);
         Optional<Product> findProductByName(String name);
         Optional<Product> findProductByDescription(String description);
-        Optional<Product> findProductById(Long productId);
+        Optional<Product> findProductById(Long id);
         int countProductsByCompanyId(Long companyId);
 
         @Query(value = "SELECT * FROM Product WHERE company_id = :company_id ORDER BY company_id OFFSET :offset LIMIT :limit", nativeQuery = true)
