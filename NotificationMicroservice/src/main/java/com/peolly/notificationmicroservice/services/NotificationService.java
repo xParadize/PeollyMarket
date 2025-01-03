@@ -2,6 +2,8 @@ package com.peolly.notificationmicroservice.services;
 
 import com.peolly.notificationmicroservice.models.Notification;
 import com.peolly.notificationmicroservice.repositories.NotificationRepository;
+import com.peolly.schemaregistry.ConfirmUserEmailEvent;
+import com.peolly.schemaregistry.CreateUserAccountEvent;
 import com.peolly.schemaregistry.PaymentMethodValidationResult;
 import lombok.RequiredArgsConstructor;
 import org.apache.avro.Conversions;
@@ -61,6 +63,26 @@ public class NotificationService {
                     userId
             );
         }
+    }
+
+    @Transactional
+    @KafkaListener(topics = "email-confirmation-token", groupId = "org-deli-queuing-security")
+    public void consumeCreateUserAccountEvent(ConsumerRecord<String, GenericRecord> message) {
+        SpecificData specificData = configureSpecificData();
+
+        CreateUserAccountEvent event = (CreateUserAccountEvent) specificData.deepCopy(
+                CreateUserAccountEvent.SCHEMA$, message.value());
+        mailSenderService.sendVerifyEmail(event.getEmail().toString(), event.getUserId());
+    }
+
+    @Transactional
+    @KafkaListener(topics = "user-email-confirmation", groupId = "org-deli-queuing-security")
+    public void consumeConfirmUserEmailEvent(ConsumerRecord<String, GenericRecord> message) {
+        SpecificData specificData = configureSpecificData();
+
+        ConfirmUserEmailEvent event = (ConfirmUserEmailEvent) specificData.deepCopy(
+                ConfirmUserEmailEvent.SCHEMA$, message.value());
+        mailSenderService.sendRegistrationEmail(event.getEmail().toString(), event.getUsername().toString());
     }
 
     @Transactional

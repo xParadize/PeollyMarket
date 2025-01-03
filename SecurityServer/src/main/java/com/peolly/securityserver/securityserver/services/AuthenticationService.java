@@ -91,13 +91,9 @@ public class AuthenticationService {
     public JwtAuthenticationResponse signIn(SignInRequest request) {
         Authentication authentication = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
-
         SecurityContextHolder.getContext().setAuthentication(authentication);
-
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-
         String jwt = jwtService.generateToken(userDetails);
-
         User tempUser = userService.findByUsername(request.getUsername());
         RefreshToken userRefreshToken = refreshTokenService.findRefreshTokenByUserId(tempUser.getId());
         var refreshToken = userRefreshToken.getToken();
@@ -108,7 +104,6 @@ public class AuthenticationService {
                 .build();
 
         authDeviceInfoService.saveSession(tempUser);
-
         return response;
     }
 
@@ -116,11 +111,8 @@ public class AuthenticationService {
     public String confirmEmailToken(String token) {
         TemporaryUser temporaryUser = tempUserService.findTempUserById(UUID.fromString(token))
                 .orElseThrow(EmailConfirmationTokenExpiredException::new);
-
-        // securityKafkaProducer.sendEmailConfirmed(token, temporaryUser);
-
+         securityKafkaProducer.sendEmailConfirmed(token, temporaryUser);
         JwtAuthenticationResponse response = enableUser(temporaryUser);
-
         return response.getAccessToken();
     }
 

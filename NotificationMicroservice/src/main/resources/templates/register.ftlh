@@ -76,7 +76,7 @@
 <body>
 <div id="container">
     <div id="header">
-        <h1>Welcome to Deli, ${name}!</h1>
+        <h1>Welcome to Deli</h1>
     </div>
     <p>Thank you for Registration in Deli Services.</p>
     <p>Now you're all set to explore our services. Log in and start exploring!</p>

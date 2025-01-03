@@ -12,6 +12,7 @@ import com.peolly.productmicroservice.repositories.ProductRepository;
 import com.peolly.productmicroservice.util.ProductDataValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
@@ -143,10 +144,11 @@ public class ProductService {
 //        return null;
 //    }
 //
-//    @Transactional(readOnly = true)
-//    public Product findProductById(Long productId) {
-//        return productsRepository.findById(productId).orElse(null);
-//    }
+    @Cacheable(value = "product", key = "#id")
+    @Transactional(readOnly = true)
+    public Product findProductById(Long id) {
+        return productRepository.findProductById(id).orElse(null);
+    }
 //
 //    @Transactional(readOnly = true)
 //    public List<Product> getAllProductsWithDiscount() {
