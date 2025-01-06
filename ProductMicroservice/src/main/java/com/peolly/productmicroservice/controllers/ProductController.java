@@ -14,10 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.stream.Collectors;
 
@@ -61,7 +58,7 @@ public class ProductController {
         }
         return new ResponseEntity<>(convertProductToDto(product), HttpStatus.OK);
     }
-//
+
 //    @GetMapping("/companies")
 //    public List<OrganizationMainPageInfo> showAllCompanies(@RequestParam(value = "page", defaultValue = "0", required = false) int page) {
 //        return organizationService.showAllOrganizations(page, organizationsPerPage).getContent();
@@ -77,5 +74,9 @@ public class ProductController {
 
     private ProductDto convertProductToDto(Product product) {
         return productMapper.toDto(product);
+    }
+
+    private Product convertDtoToProduct(ProductDto dto) {
+        return productMapper.toEntity(dto);
     }
 }
