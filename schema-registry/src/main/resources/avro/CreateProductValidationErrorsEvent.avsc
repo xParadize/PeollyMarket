@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "CreateProductValidationErrorsEvent",
+  "namespace": "com.peolly.schemaregistry",
+  "fields": [
+    {
+      "name": "validationErrors",
+      "type": {
+        "type": "array",
+        "items": "string"
+      }
+    }
+  ]
+}

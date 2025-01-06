@@ -1,29 +1,20 @@
 package com.peolly.companymicroservice.controllers;
 
 import com.peolly.companymicroservice.dto.ApiResponse;
-import com.peolly.companymicroservice.dto.CreateProductDto;
-import com.peolly.companymicroservice.exceptions.CompanyNotFoundException;
 import com.peolly.companymicroservice.exceptions.IncorrectSearchPath;
-import com.peolly.companymicroservice.kafka.CompanyKafkaListenerFutureWaiter;
 import com.peolly.companymicroservice.kafka.CompanyKafkaProducer;
 import com.peolly.companymicroservice.services.CompanyService;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import java.io.IOException;
 import java.util.stream.Collectors;
 
 @RestController
@@ -32,8 +23,6 @@ import java.util.stream.Collectors;
 @Tag(name = "Company")
 public class CompanyController {
     private final CompanyService companyService;
-    private final CompanyKafkaListenerFutureWaiter companyKafkaListenerFutureWaiter;
-    private final CompanyKafkaProducer companyKafkaProducer;
 
     @Hidden
     @RequestMapping(value = "/**")
@@ -42,29 +31,10 @@ public class CompanyController {
     }
 
     @Operation(summary = "Create product")
-    @PostMapping("/create-product")
-    public ResponseEntity<ApiResponse> createProduct(@RequestBody @Valid CreateProductDto createProductDto, BindingResult bindingResult) throws ExecutionException, InterruptedException {
-        if (bindingResult.hasFieldErrors()) {
-            String errors = getFieldsErrors(bindingResult);
-            return ResponseEntity.badRequest().body(new ApiResponse(false, errors));
-        }
-
-        boolean doesCompanyExist = companyService.getCompanyById(createProductDto.getCompanyId()).isPresent();
-        if (!doesCompanyExist) {
-            throw new CompanyNotFoundException();
-        }
-
-        // companyKafkaProducer.sendCreateProduct(createProductDto);
-
-        CompletableFuture<List<String>> future = new CompletableFuture<>();
-        companyKafkaListenerFutureWaiter.setInvalidProductFields(future);
-
-        List<String> invalidProductFields = future.get();
-        if (invalidProductFields.isEmpty()) {
-            return new ResponseEntity<>(new ApiResponse(true, "Product created."), HttpStatus.OK);
-        }
-        return new ResponseEntity<>(new ApiResponse(
-                false, String.format("Not unique product fields: %s", invalidProductFields)), HttpStatus.BAD_REQUEST);
+    @PostMapping(value = "/create-product", consumes = {"multipart/form-data"})
+    public ResponseEntity<ApiResponse> createProduct(@RequestPart("file")MultipartFile file) throws IOException {
+        companyService.checkErrorsInFile(file);
+        return new ResponseEntity<>(new ApiResponse(true, "Products sent to validation."), HttpStatus.OK);
     }
 
 //    @KafkaListener(topics = "send-product-duplicate-detected", groupId = "org-deli-queuing-product")

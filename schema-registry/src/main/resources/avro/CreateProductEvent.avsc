@@ -1,0 +1,23 @@
+{
+  "type": "record",
+  "name": "CreateProductEvent",
+  "namespace": "com.peolly.schemaregistry",
+  "fields": [
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "description",
+      "type": "string"
+    },
+    {
+      "name": "companyId",
+      "type": "long"
+    },
+    {
+      "name": "price",
+      "type": "double"
+    }
+  ]
+}

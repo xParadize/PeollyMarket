@@ -16,7 +16,6 @@ import java.util.Objects;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-//@RedisHash(value = "Product", timeToLive = 1209600) // 2 weeks
 public class Product implements Serializable {
 
     @Id

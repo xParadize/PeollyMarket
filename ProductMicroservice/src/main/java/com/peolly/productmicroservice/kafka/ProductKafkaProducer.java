@@ -1,6 +1,7 @@
 package com.peolly.productmicroservice.kafka;
 
 import lombok.AllArgsConstructor;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,11 +13,10 @@ import java.util.List;
 @Component
 @AllArgsConstructor
 public class ProductKafkaProducer {
-//    private final KafkaTemplate<String, ProductDataHaveProblemsEvent> sendIsProductDescriptionRepeatEvent;
-//    private final KafkaTemplate<String, GetCompanyByIdEvent> sendGetCompanyByIdEvent;
+    private final KafkaTemplate<String, GenericRecord> kafkaTemplate;
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
-//    public void sendEmailConfirmed(List<String> invalidFields) {
+//    public void sendSPPSPS(List<String> invalidFields) {
 //        ProductDataHaveProblemsEvent event = new ProductDataHaveProblemsEvent(invalidFields);
 //        ProducerRecord<String, ProductDataHaveProblemsEvent> record = new ProducerRecord<>(
 //                "send-product-duplicate-detected",
