@@ -7,17 +7,17 @@ spring:
   application:
     name: Product Microservice
   datasource:
-    username: "xparadize"
+    username: ${POSTGRES_USERNAME}
     url: jdbc:postgresql://localhost:5432/ProductMicroservice
-    password: "password"
-    jpa:
-      properties:
-        hibernate:
-          dialect: org.hibernate.dialect.PostgreSQLDialect
-          format_sql: true
+    password: ${POSTGRES_PASSWORD}
+  jpa:
+    properties:
       hibernate:
-        ddl-auto: update
-      show-sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    hibernate:
+      ddl-auto: update
+    show-sql: true
 
 products:
   per:

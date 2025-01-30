@@ -15,9 +15,9 @@ spring:
       port: ${REDIS_PORT}
       password: ${REDIS_PASSWORD}
   datasource:
-    username: "xparadize"
+    username: ${POSTGRES_USERNAME}
     url: jdbc:postgresql://localhost:5432/SecurityServer
-    password: "password"
+    password: ${POSTGRES_PASSWORD}
   jpa:
     properties:
       hibernate:
@@ -29,7 +29,7 @@ spring:
 
 security:
   jwt:
-    secret: ${JWT_SECRET:-miiRB4WJbeujT2yipGGnqb9zwTclvPMUyxi77BoujsFfIjVOn3GQVEBwjJZZqTaP}
+    secret: ${JWT_SECRET}
     expirationMs: 604800000 # 1 week
 
 #eureka:
