@@ -9,8 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
 @Component
 @AllArgsConstructor
 public class ProductKafkaProducer {

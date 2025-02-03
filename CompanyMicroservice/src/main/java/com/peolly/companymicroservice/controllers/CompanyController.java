@@ -36,12 +36,6 @@ public class CompanyController {
         return new ResponseEntity<>(new ApiResponse(true, "Products sent to validation."), HttpStatus.OK);
     }
 
-//    @KafkaListener(topics = "send-product-duplicate-detected", groupId = "org-deli-queuing-product")
-//    public void consumeSendProductDuplicateDetected(ProductDataHaveProblemsEvent problemsEvent) {
-//        CompletableFuture<List<String>> future = companyKafkaListenerFutureWaiter.getInvalidProductFields();
-//        future.complete(problemsEvent.invalidFields());
-//    }
-
 //    @PostMapping("/add")
 //    @Operation(summary = "Create company ticket")
 //    public ResponseEntity<?> createTicket(@RequestBody OrganizationTicketDto organizationTicketDto, Principal actualUser) {
@@ -58,12 +52,4 @@ public class CompanyController {
 //        OrganizationTicketDto ticketInformation = organizationTicketService.showUserTicket(userId);
 //        return new ResponseEntity<>(ticketInformation, HttpStatus.OK);
 //    }
-
-    private String getFieldsErrors(BindingResult bindingResult) {
-        String errorMessage = bindingResult.getFieldErrors()
-                .stream()
-                .map(error -> String.format("%s - %s", error.getField(), error.getDefaultMessage()))
-                .collect(Collectors.joining("; "));
-        return errorMessage;
-    }
 }
