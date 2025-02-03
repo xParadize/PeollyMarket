@@ -39,25 +39,7 @@ public class CompanyKafkaProducer {
         );
     }
 
-//    public void sendGetCompanyByIdResponse(Optional<Company> optionalCompany, Long companyId) {
-//        GetCompanyByIdResponseEvent event = optionalCompany
-//                .map(company -> new GetCompanyByIdResponseEvent(companyId,true, company.getName()))
-//                .orElse(new GetCompanyByIdResponseEvent(companyId, false, null));
-//        ProducerRecord<String, GetCompanyByIdResponseEvent> record = new ProducerRecord<>(
-//                "send-get-company-by-id-response",
-//                event
-//        );
-//        getCompanyByIdResponseEvent.send(record);
-//        LOGGER.info("message written at topic '{}': {} = {}", record.topic(), record.key(), record.value());
-//    }
-
     private CreateProductEvent convertCsvRepresentationToEvent(ProductCsvRepresentation csvRepresentation) {
         return productCsvRepresentationMapping.toEvent(csvRepresentation);
-    }
-
-    private List<CharSequence> convertListStringToListCharSequence(List<String> strings) {
-        return strings.stream()
-                .map(CharSequence.class::cast)
-                .collect(Collectors.toList());
     }
 }

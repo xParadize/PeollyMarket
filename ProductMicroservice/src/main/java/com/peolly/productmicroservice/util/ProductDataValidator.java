@@ -5,7 +5,6 @@ import com.peolly.productmicroservice.models.ProductValidationReport;
 import com.peolly.productmicroservice.models.ProductValidationSummary;
 import com.peolly.productmicroservice.models.ProductsDuplicateReport;
 import com.peolly.productmicroservice.repositories.ProductRepository;
-import com.peolly.productmicroservice.services.ProductService;
 import jakarta.validation.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
