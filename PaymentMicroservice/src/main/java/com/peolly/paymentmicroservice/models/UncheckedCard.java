@@ -18,7 +18,6 @@ public class UncheckedCard implements Serializable {
 
     @Id
     private String cardNumber;
-
     private String monthExpiration;
     private String yearExpiration;
     private int cvv;

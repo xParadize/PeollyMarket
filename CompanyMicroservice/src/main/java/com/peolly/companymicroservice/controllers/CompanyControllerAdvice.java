@@ -1,8 +1,8 @@
 package com.peolly.companymicroservice.controllers;
 
+import com.peolly.companymicroservice.dto.ApiResponse;
 import com.peolly.companymicroservice.exceptions.IncorrectSearchPath;
 import com.peolly.companymicroservice.exceptions.CompanyNotFoundException;
-import com.peolly.utilservice.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

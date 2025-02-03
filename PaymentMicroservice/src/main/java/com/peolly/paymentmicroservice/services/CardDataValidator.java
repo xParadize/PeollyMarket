@@ -13,10 +13,7 @@ public class CardDataValidator {
     private final CardService cardService;
 
     public boolean isCardValid(CardDto dto, UUID userId) {
-        boolean checkExpiration = isCardExpirationDataValid(dto);
-        boolean checkBalance = isCardBalanceSuitable(dto);
-        boolean checkUsage = isCardNotInUse(dto, userId);
-        return checkExpiration && checkBalance && checkUsage;
+        return isCardExpirationDataValid(dto) && isCardBalanceSuitable(dto) && isCardNotInUse(dto, userId);
     }
 
     private boolean isCardExpirationDataValid(CardDto card) {

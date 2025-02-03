@@ -3,21 +3,21 @@ server:
 
 spring:
   application:
-    name: Email Microservice
+    name: Notification Microservice
   config:
     import: optional:file:.env[.properties]
   datasource:
-    username: "xparadize"
+    username: ${POSTGRES_USERNAME}
     url: jdbc:postgresql://localhost:5432/NotificationMicroservice
-    password: "password"
-    jpa:
-      properties:
-        hibernate:
-          dialect: org.hibernate.dialect.PostgreSQLDialect
-          format_sql: true
+    password: ${POSTGRES_PASSWORD}
+  jpa:
+    properties:
       hibernate:
-        ddl-auto: update
-      show-sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+    hibernate:
+      ddl-auto: update
+    show-sql: false
 
   mail:
     host: ${MAILDEV_SPRING_MAIL_HOST}

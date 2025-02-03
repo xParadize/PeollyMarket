@@ -7,11 +7,6 @@
           <package value="com.peolly.securityserver" />
         </packages>
       </persistence-unit>
-      <persistence-unit moduleName="NotificationMicroservice" name="Default">
-        <packages>
-          <package value="com.peolly" />
-        </packages>
-      </persistence-unit>
       <persistence-unit moduleName="PaymentMicroservice" name="Default">
         <packages>
           <package value="com.peolly.paymentmicroservice" />
@@ -25,6 +20,16 @@
       <persistence-unit moduleName="ProductMicroservice" name="Default">
         <packages>
           <package value="com.peolly.productmicroservice" />
+        </packages>
+      </persistence-unit>
+      <persistence-unit moduleName="NotificationMicroservice" name="Default">
+        <packages>
+          <package value="com.peolly.notificationmicroservice" />
+        </packages>
+      </persistence-unit>
+      <persistence-unit moduleName="PeollyS3" name="Default">
+        <packages>
+          <package value="com.example.peollys3" />
         </packages>
       </persistence-unit>
     </persistence-units>

@@ -1,7 +1,7 @@
 package com.peolly.paymentmicroservice.dto;
 
 import com.peolly.paymentmicroservice.models.Card;
-import com.peolly.utilservice.events.SavePaymentMethodEvent;
+import com.peolly.schemaregistry.SavePaymentMethodEvent;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
@@ -13,6 +13,13 @@ public interface CardMapper {
     @Mapping(target = "userId", ignore = true)
 //    @Mapping(target = "email", ignore = true)
     Card toEntity(CardDto dto);
+
     CardDto toDto(Card card);
+
     CardDto toDto(SavePaymentMethodEvent event);
+
+    default String map(CharSequence value) {
+        return value != null ? value.toString() : null;
+    }
 }
+

@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "CreateUserAccountEvent",
+  "namespace": "com.peolly.schemaregistry",
+  "fields": [
+    {
+      "name": "userId",
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      }
+    },
+    {
+      "name": "email",
+      "type": "string"
+    }
+  ]
+}

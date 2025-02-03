@@ -6,8 +6,12 @@ import com.peolly.paymentmicroservice.dto.UncheckedCardMapper;
 import com.peolly.paymentmicroservice.kafka.PaymentKafkaProducer;
 import com.peolly.paymentmicroservice.models.UncheckedCard;
 import com.peolly.paymentmicroservice.repositories.UncheckedCardRepository;
-import com.peolly.utilservice.events.SavePaymentMethodEvent;
+import com.peolly.schemaregistry.SavePaymentMethodEvent;
 import lombok.RequiredArgsConstructor;
+import org.apache.avro.Conversions;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.specific.SpecificData;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,15 +30,21 @@ public class UncheckedCardService {
 
     @Transactional
     @KafkaListener(topics = "send-save-payment-method", groupId = "org-deli-queuing-payment")
-    public void consumeSavePaymentMethodEvent(SavePaymentMethodEvent event) {
+    public void consumeSavePaymentMethodEvent(ConsumerRecord<String, GenericRecord> message) {
+        SpecificData specificData = configureSpecificData();
+
+        SavePaymentMethodEvent event = (SavePaymentMethodEvent) specificData.deepCopy(
+                SavePaymentMethodEvent.SCHEMA$, message.value());
+        UUID userId = UUID.fromString(event.getUserId().toString());
+
         CardDto uncheckedCardData = convertEventToDto(event);
         saveUncheckedCard(uncheckedCardData);
 
-        boolean isCardDataValid = dataValidator.isCardValid(uncheckedCardData, event.userId());
-        if (isCardDataValid) {
-            processSuccessfulSavingPaymentMethod(uncheckedCardData, event.userId(), event.email());
+        boolean isCardValid = dataValidator.isCardValid(uncheckedCardData, userId);
+        if (isCardValid) {
+            processSuccessfulSavingPaymentMethod(uncheckedCardData, userId, event.getEmail().toString());
         } else {
-            processUnsuccessfulSavingPaymentMethod(uncheckedCardData, event.userId(), event.email());
+            processUnsuccessfulSavingPaymentMethod(uncheckedCardData, userId, event.getEmail().toString());
         }
     }
 
@@ -67,5 +77,11 @@ public class UncheckedCardService {
 
     private CardDto convertEventToDto(SavePaymentMethodEvent event) {
         return cardMapper.toDto(event);
+    }
+
+    private SpecificData configureSpecificData() {
+        SpecificData specificData = new SpecificData();
+        specificData.addLogicalTypeConversion(new Conversions.UUIDConversion());
+        return specificData;
     }
 }

@@ -1,6 +1,9 @@
 package com.peolly.companymicroservice.exceptions;
 
-import com.peolly.utilservice.exceptions.ResourceNotFoundException;
+import org.apache.kafka.common.errors.ResourceNotFoundException;
 
 public class CompanyHasNoProductsException extends ResourceNotFoundException {
+    public CompanyHasNoProductsException(String message) {
+        super(message);
+    }
 }

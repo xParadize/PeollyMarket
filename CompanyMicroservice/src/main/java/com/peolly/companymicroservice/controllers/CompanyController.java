@@ -1,30 +1,18 @@
 package com.peolly.companymicroservice.controllers;
 
-import com.peolly.companymicroservice.dto.CreateProductDto;
-import com.peolly.companymicroservice.exceptions.CompanyNotFoundException;
+import com.peolly.companymicroservice.dto.ApiResponse;
 import com.peolly.companymicroservice.exceptions.IncorrectSearchPath;
-import com.peolly.companymicroservice.kafka.CompanyKafkaListenerFutureWaiter;
-import com.peolly.companymicroservice.kafka.CompanyKafkaProducer;
 import com.peolly.companymicroservice.services.CompanyService;
-import com.peolly.utilservice.ApiResponse;
-import com.peolly.utilservice.events.ProductDataHaveProblemsEvent;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @RestController
@@ -33,8 +21,6 @@ import java.util.stream.Collectors;
 @Tag(name = "Company")
 public class CompanyController {
     private final CompanyService companyService;
-    private final CompanyKafkaListenerFutureWaiter companyKafkaListenerFutureWaiter;
-    private final CompanyKafkaProducer companyKafkaProducer;
 
     @Hidden
     @RequestMapping(value = "/**")
@@ -43,35 +29,11 @@ public class CompanyController {
     }
 
     @Operation(summary = "Create product")
-    @PostMapping("/create-product")
-    public ResponseEntity<ApiResponse> createProduct(@RequestBody @Valid CreateProductDto createProductDto, BindingResult bindingResult) throws ExecutionException, InterruptedException {
-        if (bindingResult.hasFieldErrors()) {
-            String errors = getFieldsErrors(bindingResult);
-            return ResponseEntity.badRequest().body(new ApiResponse(false, errors));
-        }
-
-        boolean doesCompanyExist = companyService.getCompanyById(createProductDto.getCompanyId()).isPresent();
-        if (!doesCompanyExist) {
-            throw new CompanyNotFoundException();
-        }
-
-        companyKafkaProducer.sendCreateProduct(createProductDto);
-
-        CompletableFuture<List<String>> future = new CompletableFuture<>();
-        companyKafkaListenerFutureWaiter.setInvalidProductFields(future);
-
-        List<String> invalidProductFields = future.get();
-        if (invalidProductFields.isEmpty()) {
-            return new ResponseEntity<>(new ApiResponse(true, "Product created."), HttpStatus.OK);
-        }
-        return new ResponseEntity<>(new ApiResponse(
-                false, String.format("Not unique product fields: %s", invalidProductFields)), HttpStatus.BAD_REQUEST);
-    }
-
-    @KafkaListener(topics = "send-product-duplicate-detected", groupId = "org-deli-queuing-product")
-    public void consumeSendProductDuplicateDetected(ProductDataHaveProblemsEvent problemsEvent) {
-        CompletableFuture<List<String>> future = companyKafkaListenerFutureWaiter.getInvalidProductFields();
-        future.complete(problemsEvent.invalidFields());
+    @PostMapping(value = "/create-product", consumes = {"multipart/form-data"})
+    public ResponseEntity<ApiResponse> createProduct(@RequestPart("file")MultipartFile file,
+                                                     @RequestParam("email") String email) throws Exception {
+        companyService.checkErrorsInFile(file, email);
+        return new ResponseEntity<>(new ApiResponse(true, "Products sent to validation."), HttpStatus.OK);
     }
 
 //    @PostMapping("/add")
@@ -90,12 +52,4 @@ public class CompanyController {
 //        OrganizationTicketDto ticketInformation = organizationTicketService.showUserTicket(userId);
 //        return new ResponseEntity<>(ticketInformation, HttpStatus.OK);
 //    }
-
-    private String getFieldsErrors(BindingResult bindingResult) {
-        String errorMessage = bindingResult.getFieldErrors()
-                .stream()
-                .map(error -> String.format("%s - %s", error.getField(), error.getDefaultMessage()))
-                .collect(Collectors.joining("; "));
-        return errorMessage;
-    }
 }

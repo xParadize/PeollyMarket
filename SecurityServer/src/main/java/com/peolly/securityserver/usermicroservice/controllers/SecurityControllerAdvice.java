@@ -1,7 +1,7 @@
 package com.peolly.securityserver.usermicroservice.controllers;
 
 import com.peolly.securityserver.exceptions.*;
-import com.peolly.utilservice.ApiResponse;
+import com.peolly.securityserver.usermicroservice.dto.ApiResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

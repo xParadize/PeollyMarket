@@ -1,7 +1,7 @@
 package com.peolly.productmicroservice.controllers;
 
+import com.peolly.productmicroservice.dto.ApiResponse;
 import com.peolly.productmicroservice.exceptions.IncorrectSearchPath;
-import com.peolly.utilservice.ApiResponse;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

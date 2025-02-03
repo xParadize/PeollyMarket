@@ -1,9 +1,0 @@
-package com.peolly.enums;
-
-public enum MailType {
-    REGISTRATION_VERIFY_EMAIL,
-    REGISTRATION_SUCCESSFUL,
-    CREDIT_CARD_LINKED,
-    COMPANY_TICKET_SEND,
-    COMPANY_TICKET_REJECTED
-}

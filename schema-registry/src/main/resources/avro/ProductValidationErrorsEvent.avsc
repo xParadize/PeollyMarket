@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "ProductValidationErrorsEvent",
+  "namespace": "com.peolly.schemaregistry",
+  "fields": [
+    {
+      "name": "uploadLink",
+      "type": "string"
+    },
+    {
+      "name": "receiverEmail",
+      "type": "string"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "ProductCreatedEvent",
+  "namespace": "com.peolly.schemaregistry",
+  "fields": [
+    {
+      "name": "productName",
+      "type": "string"
+    },
+    {
+      "name": "receiverEmail",
+      "type": "string"
+    }
+  ]
+}
