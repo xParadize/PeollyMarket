@@ -3,8 +3,7 @@ package com.peolly.companymicroservice.kafka;
 import com.peolly.companymicroservice.models.ProductCsvRepresentation;
 import com.peolly.companymicroservice.repositories.ProductCsvRepresentationMapping;
 import com.peolly.schemaregistry.CreateProductEvent;
-import com.peolly.schemaregistry.CreateProductValidationErrorsEvent;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
@@ -16,10 +15,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class CompanyKafkaProducer {
     private final KafkaTemplate<String, GenericRecord> kafkaTemplate;
-    private final ProductCsvRepresentationMapping csvRepresentationMapping;
+    private final ProductCsvRepresentationMapping productCsvRepresentationMapping;
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
     public void sendCreateProduct(List<ProductCsvRepresentation> csvRepresentationList) {
@@ -28,7 +27,7 @@ public class CompanyKafkaProducer {
                 .toList();
 
         records.forEach(kafkaTemplate::send);
-        LOGGER.info("Batch of {} messages written to topic '{}'", records.size(), "send-create-product");
+        LOGGER.info("Batch of {} messages written to topic '{}'", records.size(), "create-product-requests");
     }
 
     private ProducerRecord<String, GenericRecord> convertCsvRepresentationToRecord(ProductCsvRepresentation p) {
@@ -38,18 +37,6 @@ public class CompanyKafkaProducer {
                 "Company Microservice",
                 event
         );
-    }
-
-    public void sendCreateProductValidationErrors(List<String> validationErrors) {
-        CreateProductValidationErrorsEvent event = CreateProductValidationErrorsEvent.newBuilder()
-                .setValidationErrors(convertListStringToListCharSequence(validationErrors))
-                .build();
-        ProducerRecord<String, GenericRecord> record = new ProducerRecord<>(
-                "create-product-validation-errors",
-                "Company Microservice",
-                event
-        );
-        kafkaTemplate.send(record);
     }
 
 //    public void sendGetCompanyByIdResponse(Optional<Company> optionalCompany, Long companyId) {
@@ -65,7 +52,7 @@ public class CompanyKafkaProducer {
 //    }
 
     private CreateProductEvent convertCsvRepresentationToEvent(ProductCsvRepresentation csvRepresentation) {
-        return csvRepresentationMapping.toEvent(csvRepresentation);
+        return productCsvRepresentationMapping.toEvent(csvRepresentation);
     }
 
     private List<CharSequence> convertListStringToListCharSequence(List<String> strings) {

@@ -1,0 +1,26 @@
+server:
+  port: 8010
+
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  application:
+    name: PeollyS3
+  datasource:
+    username: ${POSTGRES_USERNAME}
+    url: jdbc:postgresql://localhost:5432/PeollyS3
+    password: ${POSTGRES_PASSWORD}
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+
+minio:
+  bucket: ${MINIO_BUCKET}
+  url: ${MINIO_URL}
+  user: ${MINIO_ROOT_USER}
+  password: ${MINIO_ROOT_PASSWORD}

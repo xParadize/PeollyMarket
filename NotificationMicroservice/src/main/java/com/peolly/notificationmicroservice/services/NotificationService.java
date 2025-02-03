@@ -2,9 +2,7 @@ package com.peolly.notificationmicroservice.services;
 
 import com.peolly.notificationmicroservice.models.Notification;
 import com.peolly.notificationmicroservice.repositories.NotificationRepository;
-import com.peolly.schemaregistry.ConfirmUserEmailEvent;
-import com.peolly.schemaregistry.CreateUserAccountEvent;
-import com.peolly.schemaregistry.PaymentMethodValidationResult;
+import com.peolly.schemaregistry.*;
 import lombok.RequiredArgsConstructor;
 import org.apache.avro.Conversions;
 import org.apache.avro.data.TimeConversions;
@@ -83,6 +81,32 @@ public class NotificationService {
         ConfirmUserEmailEvent event = (ConfirmUserEmailEvent) specificData.deepCopy(
                 ConfirmUserEmailEvent.SCHEMA$, message.value());
         mailSenderService.sendRegistrationEmail(event.getEmail().toString(), event.getUsername().toString());
+    }
+
+    @Transactional
+    @KafkaListener(topics = "product-validation-errors", groupId = "org-deli-queuing-s3")
+    public void consumeProductValidationEvent(ConsumerRecord<String, GenericRecord> message) {
+        SpecificData specificData = configureSpecificData();
+
+        ProductValidationErrorsEvent event = (ProductValidationErrorsEvent) specificData.deepCopy(
+                ProductValidationErrorsEvent.SCHEMA$, message.value());
+
+        mailSenderService.sendProductValidationErrorsEmail(
+                event.getUploadLink().toString(),
+                event.getReceiverEmail().toString());
+    }
+
+    @Transactional
+    @KafkaListener(topics = "product-created", groupId = "org-deli-queuing-product")
+    public void consumeProductCreatedEvent(ConsumerRecord<String, GenericRecord> message) {
+        SpecificData specificData = configureSpecificData();
+
+        ProductCreatedEvent event = (ProductCreatedEvent) specificData.deepCopy(
+                ProductCreatedEvent.SCHEMA$, message.value());
+
+        mailSenderService.sendProductCreatedEmail(
+                event.getProductName().toString(),
+                event.getReceiverEmail().toString());
     }
 
     @Transactional

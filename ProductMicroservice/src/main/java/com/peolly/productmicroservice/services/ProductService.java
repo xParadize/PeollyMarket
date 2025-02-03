@@ -1,33 +1,34 @@
 package com.peolly.productmicroservice.services;
 
+import com.peolly.productmicroservice.dto.CreateProductRequest;
 import com.peolly.productmicroservice.dto.ProductDto;
 import com.peolly.productmicroservice.dto.ProductMapper;
-import com.peolly.productmicroservice.exceptions.CompanyHasNoProductsException;
-import com.peolly.productmicroservice.exceptions.IncorrectSearchPath;
 import com.peolly.productmicroservice.kafka.ProductKafkaProducer;
-import com.peolly.productmicroservice.models.Product;
+import com.peolly.productmicroservice.models.*;
 import com.peolly.productmicroservice.repositories.ProductRepository;
+import com.peolly.productmicroservice.util.BatchSizeCalculator;
 import com.peolly.productmicroservice.util.ProductDataValidator;
-import com.peolly.schemaregistry.CreateProductEvent;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
+import com.peolly.productmicroservice.util.ProductFileProcessor;
 import lombok.RequiredArgsConstructor;
-import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.specific.SpecificData;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -37,97 +38,134 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final ProductDataValidator productDataValidator;
-    private final ProductKafkaProducer productKafkaProducer;
     private final ProductMapper productMapper;
+    private final ProductFileProcessor productFileProcessor;
+    private final ProductKafkaProducer productKafkaProducer;
+    private final BatchSizeCalculator batchSizeCalculator;
 
-    private final List<Product> productBatch = Collections.synchronizedList(new ArrayList<>());
-    private final int BATCH_SIZE = 100;
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
-
-    @Transactional
-    @KafkaListener(topics = "create-product-requests", groupId = "org-deli-queuing-company")
-    public void consumeCreateProductRequests(ConsumerRecord<String, GenericRecord> message) {
-        SpecificData specificData = new SpecificData();
-
-        CreateProductEvent event = (CreateProductEvent) specificData.deepCopy(
-                CreateProductEvent.SCHEMA$, message.value());
-
-        List<String> invalidFields = productDataValidator.validateProductData(
-                event.getName().toString(), event.getDescription().toString()
-        );
-
-        if (!invalidFields.isEmpty()) {
-//            productKafkaProducer (invalidFields);
-            System.out.println("Errors are here!!!");
-        } else {
-            saveProduct(event);
-        }
+    @Cacheable(value = "product", key = "#id")
+    @Transactional(readOnly = true)
+    public Product findProductById(Long id) {
+        return productRepository.findProductById(id).orElse(null);
     }
 
     @Transactional
-    public void saveProduct(CreateProductEvent event) {
-        Product product = Product.builder()
-                .name(event.getName().toString())
-                .description(event.getDescription().toString())
-                .image(emptyProductFile)
-                .companyId(event.getCompanyId())
-                .price(event.getPrice())
-                .storageAmount(0)
-                .evaluation(0.0)
-                .build();
-        productRepository.save(product);
+    public void validateProductsInFile(MultipartFile file, String email) {
+        List<ProductCsvRepresentation> representations = productFileProcessor.parseCsv(file);
+        List<ProductValidationSummary> validationErrorReports = productDataValidator.getProductsValidationResult(representations);
 
-        synchronized (productBatch) {
-            productBatch.add(product);
-            if (productBatch.size() >= BATCH_SIZE) {
-                processBatch();
+        boolean hasErrors = false;
+
+        for (ProductValidationSummary pvs : validationErrorReports) {
+            if (!pvs.getValidationErrors().isEmpty() || !pvs.getDuplicateErrors().isEmpty()) {
+                hasErrors = true;
+                break;
             }
         }
-    }
 
-    private void processBatch() {
-        List<Product> batchToSave;
-        synchronized (productBatch) {
-            if (productBatch.isEmpty()) return;
-            batchToSave = new ArrayList<>(productBatch);
-            productBatch.clear();
+        if (hasErrors) {
+            createCsvWithValidationErrors(validationErrorReports, email);
+        } else {
+            saveProducts(representations);
         }
-        executorService.submit(() -> saveProductsInBatch(batchToSave));
     }
 
-    private void saveProductsInBatch(List<Product> batchToSave) {
-        try {
-            productRepository.saveAll(batchToSave);
+    @Transactional
+    public boolean isProductValid(CreateProductRequest createProductRequest) {
+        ProductDto productDto = productMapper.toDto(createProductRequest);
+        Product product = convertDtoToProduct(productDto);
+
+        boolean isNameDuplicate = getExistingProductNames().contains(product.getName());
+        boolean isDescriptionDuplicate = getExistingProductDescriptions().contains(product.getDescription());
+
+        if (isNameDuplicate || isDescriptionDuplicate) {
+            return false;
+        }
+        saveProduct(product, createProductRequest.getReportToEmail());
+        return true;
+    }
+
+    @Transactional
+    public void saveProduct(Product product, String email) {
+        productRepository.save(product);
+        productKafkaProducer.sendProductCreated(product.getName(), email);
+    }
+
+    @Transactional
+    public void saveProducts(List<ProductCsvRepresentation> productsCsv) {
+        for (ProductCsvRepresentation p : productsCsv) {
+            System.out.println(p.toCsvString());
+        }
+
+        int batchSize = batchSizeCalculator.getBatchSize();
+        for (int i = 0; i < productsCsv.size(); i += batchSize) {
+            int end = Math.min(i + batchSize, productsCsv.size());
+            List<Product> batch = productsCsv.subList(i, end).stream()
+                    .map(this::convertCsvRepresentationToProduct)
+                    .toList();
+            productRepository.saveAll(batch);
             productRepository.flush();
-        } catch (Exception e) {
-            System.err.println("Error saving product batch: " + e.getMessage());
         }
     }
 
-    @PostConstruct
-    public void initializeBatchTimer() {
-        executorService.submit(() -> {
-            while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    Thread.sleep(5000);
-                    processBatch();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
+    private void createCsvWithValidationErrors(List<ProductValidationSummary> validationSummary, String email) {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(byteArrayOutputStream, StandardCharsets.UTF_8))) {
+            for (ProductValidationSummary summary : validationSummary) {
+                if (summary.getValidationErrors() != null) {
+                    for (ProductValidationReport report : summary.getValidationErrors()) {
+                        for (String errorMessage : report.getErrorMessages()) {
+                            writer.printf("%s - %s%n",
+                                    report.getIncorrectData(),
+                                    errorMessage);
+                        }
+                    }
+                }
+
+                if (summary.getDuplicateErrors() != null) {
+                    for (ProductsDuplicateReport duplicate : summary.getDuplicateErrors()) {
+                        writer.printf("%s %s%n",
+                                duplicate.getDuplicateData(),
+                                duplicate.getErrorMessages());
+                    }
                 }
             }
-        });
+        }
+        sendValidationReportToEmail(byteArrayOutputStream.toByteArray(), email);
     }
 
-    @Transactional(readOnly = true)
-    public List<ProductDto> productsPagination(int page, int productsPerPage) {
-        List<Product> products = productRepository.findAll(PageRequest.of(page, productsPerPage)).getContent();
-        if (products.isEmpty()) throw new IncorrectSearchPath();
+    private void sendValidationReportToEmail(byte[] csvData, String email) {
+        RestTemplate restTemplate = new RestTemplate();
 
-        List<ProductDto> productsToReturn = products.stream()
-                .map(this::convertProductToDto)
-                .toList();
-        return productsToReturn;
+        ByteArrayResource byteArrayResource = new ByteArrayResource(csvData) {
+            @Override
+            public String getFilename() {
+                long time = System.currentTimeMillis();
+                return time + "_validation_errors.csv";
+            }
+        };
+
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", byteArrayResource);
+        body.add("email", email);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+        restTemplate.postForEntity("http://localhost:8010/s3/upload", requestEntity, String.class);
     }
+
+//    @Transactional(readOnly = true)
+//    public List<ProductDto> productsPagination(int page, int productsPerPage) {
+//        List<Product> products = productRepository.findAll(PageRequest.of(page, productsPerPage)).getContent();
+//        if (products.isEmpty()) throw new IncorrectSearchPath();
+//
+//        List<ProductDto> productsToReturn = products.stream()
+//                .map(this::convertProductToDto)
+//                .toList();
+//        return productsToReturn;
+//    }
 
 //    @Transactional(readOnly = true)
 //    public List<ProductDto> findProductsByCompanyIdWithPagination(Long companyId, int page, int productsPerPage)
@@ -143,9 +181,9 @@ public class ProductService {
 //        return convertProductsToDtos(products);
 //    }
 
-    private int calculatePageOffset(int page, int productsPerPage) {
-        return page * productsPerPage;
-    }
+//    private int calculatePageOffset(int page, int productsPerPage) {
+//        return page * productsPerPage;
+//    }
 
 //    private GetCompanyByIdResponseEvent fetchCompanyData(Long companyId) throws ExecutionException, InterruptedException {
 //        productKafkaProducer.sendGetCompanyById(companyId);
@@ -159,28 +197,24 @@ public class ProductService {
 //        return companyData;
 //    }
 
-    private void validateCompanyHasProducts(Long companyId) {
-        long totalProductsCount = productRepository.countProductsByCompanyId(companyId);
-        if (totalProductsCount == 0) {
-            throw new CompanyHasNoProductsException();
-        }
-    }
+//    private void validateCompanyHasProducts(Long companyId) {
+//        long totalProductsCount = productRepository.countProductsByCompanyId(companyId);
+//        if (totalProductsCount == 0) {
+//            throw new CompanyHasNoProductsException();
+//        }
+//    }
+//
+//    private List<Product> fetchProductsForPage(Long companyId, int offset, int productsPerPage) {
+//        return productRepository.findProductsByCompanyIdWithPagination(companyId, offset, productsPerPage);
+//    }
+//
+//    private void validatePageHasProducts(List<Product> products) {
+//        if (products.isEmpty()) {
+//            throw new IncorrectSearchPath();
+//        }
+//    }
 
-    private List<Product> fetchProductsForPage(Long companyId, int offset, int productsPerPage) {
-        return productRepository.findProductsByCompanyIdWithPagination(companyId, offset, productsPerPage);
-    }
 
-    private void validatePageHasProducts(List<Product> products) {
-        if (products.isEmpty()) {
-            throw new IncorrectSearchPath();
-        }
-    }
-
-    private List<ProductDto> convertProductsToDtos(List<Product> products) {
-        return products.stream()
-                .map(this::convertProductToDto)
-                .toList();
-    }
 
 //    @Transactional
 //    @KafkaListener(topics = "send-get-company-by-id-response", groupId = "org-deli-queuing-company")
@@ -200,11 +234,7 @@ public class ProductService {
 //        return null;
 //    }
 //
-    @Cacheable(value = "product", key = "#id")
-    @Transactional(readOnly = true)
-    public Product findProductById(Long id) {
-        return productRepository.findProductById(id).orElse(null);
-    }
+
 
 //    @CacheEvict(value = "product", key = "#product.id")
 //    public void updateProduct(Product product) {
@@ -221,7 +251,30 @@ public class ProductService {
 //    public void changeDiscount(Integer discountId, Long productId) {
 //        productsRepository.changeDiscount(discountId, productId);
 //    }
-    private ProductDto convertProductToDto(Product productToConvert) {
-        return productMapper.toDto(productToConvert);
+
+    private Product convertDtoToProduct(ProductDto productDto) {
+        Product product = productMapper.toEntity(productDto);
+        product.setImage(emptyProductFile);
+        product.setStorageAmount(0);
+        product.setEvaluation(0.0);
+        return product;
+    }
+
+    private Product convertCsvRepresentationToProduct(ProductCsvRepresentation csvRepresentation) {
+        Product product = productMapper.toDto(csvRepresentation);
+        product.setImage(emptyProductFile);
+        product.setStorageAmount(0);
+        product.setEvaluation(0.0);
+        return product;
+    }
+
+    @Transactional(readOnly = true)
+    public Set<String> getExistingProductDescriptions() {
+        return productRepository.findAllProductDescriptions();
+    }
+
+    @Transactional(readOnly = true)
+    public Set<String> getExistingProductNames() {
+        return productRepository.findAllProductNames();
     }
 }

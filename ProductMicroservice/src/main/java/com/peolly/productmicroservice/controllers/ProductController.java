@@ -1,6 +1,7 @@
 package com.peolly.productmicroservice.controllers;
 
 import com.peolly.productmicroservice.dto.ApiResponse;
+import com.peolly.productmicroservice.dto.CreateProductRequest;
 import com.peolly.productmicroservice.dto.ProductDto;
 import com.peolly.productmicroservice.dto.ProductMapper;
 import com.peolly.productmicroservice.exceptions.IncorrectSearchPath;
@@ -9,12 +10,14 @@ import com.peolly.productmicroservice.services.ProductService;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.stream.Collectors;
 
@@ -64,6 +67,39 @@ public class ProductController {
 //        return organizationService.showAllOrganizations(page, organizationsPerPage).getContent();
 //    }
 
+    @Operation(summary = "Create product")
+    @PostMapping(value = "/create-product")
+    public ResponseEntity<ApiResponse> createProduct(@RequestBody @Valid CreateProductRequest createProductRequest, BindingResult bindingResult) {
+        if (bindingResult.hasFieldErrors()) {
+            String errors = getFieldsErrors(bindingResult);
+            return new ResponseEntity<>(new ApiResponse(false, errors), HttpStatus.BAD_REQUEST);
+        }
+
+        boolean valid = productsService.isProductValid(createProductRequest);
+        if (!valid) {
+            return new ResponseEntity<>(new ApiResponse(false, "Product contains duplicate data. Please fix it and make request again."), HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(new ApiResponse(true, "Product added. You will receive an email notification with more information."), HttpStatus.OK);
+    }
+
+    @Operation(summary = "Create products")
+    @PostMapping(value = "/create-products", consumes = "multipart/form-data")
+    public ResponseEntity<ApiResponse> createProducts(
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "email") String email) {
+
+        if (file == null && email == null) {
+            throw new IllegalArgumentException("Please provide a file and email for report.");
+        }
+
+        if (file == null || email == null) {
+            throw new IllegalArgumentException("Please provide a CSV file and email for report.");
+        }
+
+        productsService.validateProductsInFile(file, email);
+        return new ResponseEntity<>(new ApiResponse(true, "Products sent to validation."), HttpStatus.OK);
+    }
+
     private String getFieldsErrors(BindingResult bindingResult) {
         String errorMessage = bindingResult.getFieldErrors()
                 .stream()
@@ -74,9 +110,5 @@ public class ProductController {
 
     private ProductDto convertProductToDto(Product product) {
         return productMapper.toDto(product);
-    }
-
-    private Product convertDtoToProduct(ProductDto dto) {
-        return productMapper.toEntity(dto);
     }
 }

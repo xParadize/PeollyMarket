@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
@@ -19,6 +20,12 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
         Optional<Product> findProductByDescription(String description);
         Optional<Product> findProductById(Long id);
         int countProductsByCompanyId(Long companyId);
+
+        @Query("SELECT p.name FROM Product p")
+        Set<String> findAllProductNames();
+
+        @Query("SELECT p.description FROM Product p")
+        Set<String> findAllProductDescriptions();
 
         @Query(value = "SELECT * FROM Product WHERE company_id = :company_id ORDER BY company_id OFFSET :offset LIMIT :limit", nativeQuery = true)
         List<Product> findProductsByCompanyIdWithPagination(@Param("company_id") Long companyId, @Param("offset") int offset, @Param("limit") int limit);

@@ -2,7 +2,6 @@ package com.peolly.companymicroservice.controllers;
 
 import com.peolly.companymicroservice.dto.ApiResponse;
 import com.peolly.companymicroservice.exceptions.IncorrectSearchPath;
-import com.peolly.companymicroservice.kafka.CompanyKafkaProducer;
 import com.peolly.companymicroservice.services.CompanyService;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,7 +13,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.stream.Collectors;
 
 @RestController
@@ -32,8 +30,9 @@ public class CompanyController {
 
     @Operation(summary = "Create product")
     @PostMapping(value = "/create-product", consumes = {"multipart/form-data"})
-    public ResponseEntity<ApiResponse> createProduct(@RequestPart("file")MultipartFile file) throws IOException {
-        companyService.checkErrorsInFile(file);
+    public ResponseEntity<ApiResponse> createProduct(@RequestPart("file")MultipartFile file,
+                                                     @RequestParam("email") String email) throws Exception {
+        companyService.checkErrorsInFile(file, email);
         return new ResponseEntity<>(new ApiResponse(true, "Products sent to validation."), HttpStatus.OK);
     }
 
