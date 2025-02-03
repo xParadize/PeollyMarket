@@ -10,7 +10,6 @@ import java.util.Properties;
 @Data
 @ConfigurationProperties(prefix = "spring.mail")
 public class MailProperties {
-
     private String host;
     private int port;
     private String username;

@@ -1,28 +1,29 @@
 package com.peolly.companymicroservice.services;
 
 
+import com.opencsv.bean.ColumnPositionMappingStrategy;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
-import com.opencsv.bean.HeaderColumnNameMappingStrategy;
 import com.peolly.companymicroservice.kafka.CompanyKafkaProducer;
-import com.peolly.companymicroservice.kafka.KafkaProducerConfiguration;
-import com.peolly.companymicroservice.models.Company;
 import com.peolly.companymicroservice.models.ProductCsvRepresentation;
-import com.peolly.companymicroservice.repositories.CompanyRepository;
+import com.peolly.companymicroservice.models.ProductValidationReport;
 import jakarta.validation.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -39,22 +40,40 @@ public class CompanyService {
 //    }
 
     @Transactional(readOnly = true)
-    public void checkErrorsInFile(MultipartFile file) throws IOException {
+    public void checkErrorsInFile(MultipartFile file, String email) throws Exception {
         List<ProductCsvRepresentation> products = parseCsv(file);
-        List<String> validationErrors = getErrorFields(products);
-        if (validationErrors.isEmpty()) {
+        List<ProductValidationReport> validationErrorReports = getErrorFields(products);
+        if (validationErrorReports.isEmpty()) {
             uploadProducts(products);
         } else {
-            companyKafkaProducer.sendCreateProductValidationErrors(validationErrors);
+            createCsvWithValidationErrors(validationErrorReports, email);
         }
 
     }
 
+    private void createCsvWithValidationErrors(List<ProductValidationReport> reports, String email) {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(byteArrayOutputStream, StandardCharsets.UTF_8))) {
+            for (ProductValidationReport report : reports) {
+                for (String errorMessage : report.getErrorMessages()) {
+                    writer.printf("Row %d: %s - %s%n",
+                            report.getRow(),
+                            report.getIncorrectData(),
+                            errorMessage);
+                }
+            }
+        }
+        sendCsvToReceiver(byteArrayOutputStream.toByteArray(), email);
+    }
+
     private List<ProductCsvRepresentation> parseCsv(MultipartFile file) throws IOException {
         try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
-            HeaderColumnNameMappingStrategy<ProductCsvRepresentation> strategy =
-                    new HeaderColumnNameMappingStrategy<>();
+            ColumnPositionMappingStrategy<ProductCsvRepresentation> strategy =
+                    new ColumnPositionMappingStrategy<>();
             strategy.setType(ProductCsvRepresentation.class);
+
+            String[] columns = {"name", "description", "companyId", "price"};
+            strategy.setColumnMapping(columns);
 
             CsvToBean<ProductCsvRepresentation> csvToBean =
                     new CsvToBeanBuilder<ProductCsvRepresentation>(reader)
@@ -76,34 +95,65 @@ public class CompanyService {
         }
     }
 
+
     private void uploadProducts(List<ProductCsvRepresentation> products) {
         int threadsCount = 20;
         ExecutorService executorService = Executors.newFixedThreadPool(threadsCount);
-        int batchSize = products.size() / threadsCount;
-
+        int batchSize = (int) Math.ceil((double) products.size() / threadsCount);
         for (int i = 0; i < threadsCount; i++) {
             int start = i * batchSize;
-            int end = (i + 1) * batchSize;
+            int end = Math.min((i + 1) * batchSize, products.size());
             List<ProductCsvRepresentation> subList = products.subList(start, end);
             executorService.submit(() -> companyKafkaProducer.sendCreateProduct(subList));
         }
     }
 
-    private List<String> getErrorFields(List<@Valid ProductCsvRepresentation> products) {
+    private List<ProductValidationReport> getErrorFields(List<@Valid ProductCsvRepresentation> products) {
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         Validator validator = factory.getValidator();
 
-        List<String> errors = new ArrayList<>();
+        List<ProductValidationReport> reports = new ArrayList<>();
         for (int i = 0; i < products.size(); i++) {
             ProductCsvRepresentation product = products.get(i);
             Set<ConstraintViolation<ProductCsvRepresentation>> violations = validator.validate(product);
             if (!violations.isEmpty()) {
+                List<String> errors = new ArrayList<>();
                 for (ConstraintViolation<ProductCsvRepresentation> violation : violations) {
-                    errors.add(String.format("Row %s: %s", i + 1, violation.getMessage()));
+                    errors.add(violation.getMessage());
                 }
+                ProductValidationReport report = ProductValidationReport.builder()
+                        .row(i + 1)
+                        .isProductValid(false)
+                        .errorMessages(errors)
+                        .incorrectData(product.toCsvString())
+                        .build();
+                reports.add(report);
             }
         }
-        return errors;
+        return reports;
+    }
+
+    private void sendCsvToReceiver(byte[] csvData, String email) {
+        RestTemplate restTemplate = new RestTemplate();
+
+        ByteArrayResource byteArrayResource = new ByteArrayResource(csvData) {
+            @Override
+            public String getFilename() {
+                long time = System.currentTimeMillis();
+                return time + "_validation_errors.csv";
+            }
+        };
+
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", byteArrayResource);
+        body.add("email", email);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
+        restTemplate.postForEntity("http://localhost:8010/s3/upload", requestEntity, String.class);
     }
 
 //    @Transactional

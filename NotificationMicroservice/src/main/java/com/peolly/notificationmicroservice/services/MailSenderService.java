@@ -62,6 +62,7 @@ public class MailSenderService {
         return writer.getBuffer().toString();
     }
 
+    @Async
     @SneakyThrows
     public void sendCreditCartLinkedEmail(String email, String cardNumber, boolean isCardDataValid) {
         MimeMessage mimeMessage = mailSender.createMimeMessage();
@@ -95,6 +96,48 @@ public class MailSenderService {
         StringWriter writer = new StringWriter();
         Map<String, Object> model = new HashMap<>();
         configuration.getTemplate("credit_card_was_not_linked.ftlh").process(model, writer);
+        return writer.getBuffer().toString();
+    }
+
+    @Async
+    @SneakyThrows
+    public void sendProductValidationErrorsEmail(String uploadLink, String email) {
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, false, "UTF-8");
+        helper.setSubject("Issues Found in Uploaded Product File");
+        helper.setTo(email);
+        String emailContent = getProductValidationErrorsEmail(uploadLink);
+        helper.setText(emailContent, true);
+        mailSender.send(mimeMessage);
+    }
+
+    @SneakyThrows
+    private String getProductValidationErrorsEmail(String uploadLink) {
+        StringWriter writer = new StringWriter();
+        Map<String, Object> model = new HashMap<>();
+        model.put("uploadLink", uploadLink);
+        configuration.getTemplate("product_validation_errors.ftlh").process(model, writer);
+        return writer.getBuffer().toString();
+    }
+
+    @Async
+    @SneakyThrows
+    public void sendProductCreatedEmail(String productName, String email) {
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, false, "UTF-8");
+        helper.setSubject("Your product was successfully placed on Peolly Market!");
+        helper.setTo(email);
+        String emailContent = getProductCreatedEmail(productName);
+        helper.setText(emailContent, true);
+        mailSender.send(mimeMessage);
+    }
+
+    @SneakyThrows
+    private String getProductCreatedEmail(String productName) {
+        StringWriter writer = new StringWriter();
+        Map<String, Object> model = new HashMap<>();
+        model.put("productName", productName);
+        configuration.getTemplate("product_created.ftlh").process(model, writer);
         return writer.getBuffer().toString();
     }
 

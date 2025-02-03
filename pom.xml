@@ -21,7 +21,9 @@
         <module>ProductMicroservice</module>
         <module>CompanyMicroservice</module>
         <module>schema-registry</module>
+        <module>SecurityServer</module>
         <module>NotificationMicroservice</module>
+        <module>PeollyS3</module>
     </modules>
 
     <properties>
@@ -50,6 +52,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
+            <version>42.7.3</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>

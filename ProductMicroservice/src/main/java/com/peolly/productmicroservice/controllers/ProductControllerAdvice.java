@@ -35,4 +35,11 @@ public class ProductControllerAdvice {
         ApiResponse response = new ApiResponse(false, "This company doesn't have any products.");
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ApiResponse> handleIllegalArgumentException(IllegalArgumentException e) {
+        ApiResponse response = new ApiResponse(false, e.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
 }
