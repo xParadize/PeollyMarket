@@ -5,10 +5,16 @@ target/
 !**/src/test/**/target/
 .env
 
-### Kafka ###
-kafka/config/temp/
-kafka/config/temp/*
-kafka/config/temp/**
+### Kafka Logs ###
+kafka_logs/
+kafka_logs/*
+kafka_logs/**
+
+### Exclude possible Kafka Logs and Metadata ####
+*.index
+*.log
+*.timeindex
+*.checkpoint
 
 ### STS ###
 .apt_generated

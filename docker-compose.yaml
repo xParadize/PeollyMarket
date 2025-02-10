@@ -2,6 +2,8 @@ version: "3.8"
 
 services:
   postgres:
+    env_file:
+      - .env
     image: postgres
     restart: unless-stopped
     ports:
@@ -20,6 +22,8 @@ services:
       retries: 5
 
   pgadmin:
+    env_file:
+      - .env
     image: dpage/pgadmin4
     restart: unless-stopped
     ports:
@@ -39,6 +43,8 @@ services:
       retries: 5
 
   redis:
+    env_file:
+      - .env
     image: redis:7.2-alpine
     restart: always
     ports:
@@ -68,6 +74,8 @@ services:
       - minio-data:/minio
 
   maildev:
+    env_file:
+      - .env
     image: maildev/maildev
     restart: always
     environment:
@@ -84,6 +92,8 @@ services:
         max-size: "1m"
 
   kafka-1:
+    env_file:
+      - .env
     image: bitnami/kafka:latest
     ports:
       - "9092:9092"
@@ -99,9 +109,11 @@ services:
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
       - KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL=http://schema-registry:8081
     volumes:
-      - ./Users/Stepa/kafka/config/temp/docker/volumes/server-1/:/bitnami/kafka
+      - ${KAFKA_LOG_DIR_1}:/bitnami/kafka
 
   kafka-2:
+    env_file:
+      - .env
     image: bitnami/kafka:latest
     ports:
       - "9094:9094"
@@ -117,8 +129,11 @@ services:
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
       - KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL=http://schema-registry:8081
     volumes:
-      - ./Users/Stepa/kafka/config/temp/docker/volumes/server-2/:/bitnami/kafka
+      - ${KAFKA_LOG_DIR_2}:/bitnami/kafka
+
   kafka-3:
+    env_file:
+      - .env
     image: bitnami/kafka:latest
     ports:
       - "9096:9096"
@@ -134,9 +149,11 @@ services:
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
       - KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL=http://schema-registry:8081
     volumes:
-      - ./Users/Stepa/kafka/config/temp/docker/volumes/server-3/:/bitnami/kafka
+      - ${KAFKA_LOG_DIR_3}:/bitnami/kafka
 
   kafka-ui:
+    env_file:
+      - .env
     image: provectuslabs/kafka-ui:latest
     restart: always
     ports:
@@ -153,6 +170,8 @@ services:
       retries: 5
 
   schema-registry:
+    env_file:
+      - .env
     image: confluentinc/cp-schema-registry:latest
     hostname: schema-registry
     ports:
