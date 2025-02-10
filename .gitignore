@@ -5,6 +5,9 @@ target/
 !**/src/test/**/target/
 .env
 
+### Kafka ###
+kafka/config/temp/
+
 ### STS ###
 .apt_generated
 .classpath
