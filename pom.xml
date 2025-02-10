@@ -24,6 +24,7 @@
         <module>SecurityServer</module>
         <module>NotificationMicroservice</module>
         <module>PeollyS3</module>
+        <module>OrderMicroservice</module>
     </modules>
 
     <properties>

@@ -34,8 +34,26 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public User findById(UUID userid) {
-        return usersRepository.findById(userid)
+    public User findById(UUID userId) {
+        return usersRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    }
+
+    @Transactional(readOnly = true)
+    public User findByEmail(String email) {
+        return usersRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    }
+
+    @Transactional(readOnly = true)
+    public String findEmailByUserId(UUID userId) {
+        return usersRepository.getEmailByUserId(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    }
+
+    @Transactional(readOnly = true)
+    public String findEmailByUsername(String username) {
+        return usersRepository.getEmailByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 

@@ -53,6 +53,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/payment/**").hasRole("USER")
                         .requestMatchers("/company/**").hasAnyRole("COMPANY_MANAGER", "ADMIN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())

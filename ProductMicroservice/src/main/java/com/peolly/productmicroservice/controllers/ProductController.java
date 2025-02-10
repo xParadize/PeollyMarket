@@ -57,7 +57,7 @@ public class ProductController {
     public ResponseEntity<?> showProductInfo(@PathVariable("id") Long id) {
         Product product = productsService.findProductById(id);
         if (product == null) {
-            return new ResponseEntity<>(new ApiResponse(false, "Item with this ID not found"), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ApiResponse(false, "Product not found"), HttpStatus.NOT_FOUND);
         }
         return new ResponseEntity<>(convertProductToDto(product), HttpStatus.OK);
     }

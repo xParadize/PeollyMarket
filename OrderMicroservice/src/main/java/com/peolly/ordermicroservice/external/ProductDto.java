@@ -1,4 +1,4 @@
-package com.peolly.productmicroservice.dto;
+package com.peolly.ordermicroservice.external;
 
 import java.io.Serializable;
 
@@ -8,6 +8,6 @@ public record ProductDto(
         String description,
         String image,
         Double price,
-        Long companyId)
-implements Serializable {
+        Long companyId
+) implements Serializable {
 }
