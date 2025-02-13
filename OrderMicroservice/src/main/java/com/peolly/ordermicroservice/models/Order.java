@@ -43,14 +43,4 @@ public class Order implements Serializable {
     public final int hashCode() {
         return this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode() : getClass().hashCode();
     }
-
-    @Override
-    public String toString() {
-        return "{" +
-                "\"orderId\": \"" + orderId + "\", " +
-                "\"productDto\": " + productDto.toString() + ", " +
-                "\"userId\": \"" + userId + "\", " +
-                "\"createdAt\": \"" + createdAt + "\"" +
-                "}";
-    }
 }

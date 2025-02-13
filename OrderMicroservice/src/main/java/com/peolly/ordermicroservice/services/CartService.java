@@ -1,9 +1,12 @@
 package com.peolly.ordermicroservice.services;
 
-import com.peolly.ordermicroservice.dto.AddToCartDto;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.peolly.ordermicroservice.external.ProductDto;
 import com.peolly.ordermicroservice.models.Order;
 import com.peolly.ordermicroservice.util.CartRestService;
+import com.peolly.ordermicroservice.util.LocalDateTimeDeserializer;
+import com.peolly.ordermicroservice.util.LocalDateTimeSerializer;
 import com.peolly.ordermicroservice.util.OrderIdGenerator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +15,8 @@ import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -25,6 +30,12 @@ public class CartService {
     private int redisPort;
 
     private final CartRestService cartRestService;
+    private final String CART_CACHE_KEY = "Cart:";
+
+    private static final Gson GSON = new GsonBuilder()
+            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeDeserializer())
+            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeSerializer())
+            .create();
 
 //    @Transactional(readOnly = true)
 //    public CartDto listCartProducts(UUID userId) {
@@ -55,53 +66,42 @@ public class CartService {
 //    }
 
     @Transactional
-    public void addToCart(AddToCartDto addToCartDto, UUID customerId) {
-        Jedis jedis = new Jedis(redisHost, redisPort);
-        ProductDto productInfo = cartRestService.getProductInfo(addToCartDto.productId());
-        Order newOrder = Order.builder()
-                .orderId(OrderIdGenerator.generate())
-                .productDto(productInfo)
-                .userId(customerId)
-                .createdAt(LocalDateTime.now())
-                .build();
-        jedis.lpush("Cart:" + customerId, String.valueOf(newOrder));
-        jedis.close();
+    public void addToCart(Long productId, UUID customerId) {
+        try (Jedis jedis = new Jedis(redisHost, redisPort)) {
+            ProductDto productInfo = cartRestService.getProductInfo(productId);
+
+            Order newOrder = Order.builder()
+                    .orderId(OrderIdGenerator.generate())
+                    .productDto(productInfo)
+                    .userId(customerId)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            String orderJson = GSON.toJson(newOrder);
+            jedis.lpush(CART_CACHE_KEY + customerId, orderJson);
+        }
     }
 
-//    @Transactional
-//    public void deleteItem(Long itemNumber, UUID userId) {
-//
-//        String key = "Cart:" + userId;
-//        Jedis jedis = new Jedis();
-//
-//        // Receive cart by key
-//        List<String> result = jedis.lrange(key, 0, -1);
-//
-//        // Get order list in json format
-//        GsonBuilder gsonBuilder = new GsonBuilder();
-//        gsonBuilder.registerTypeAdapter(LocalDateTime.class, new LocalDateTimeDeserializer());
-//
-//        // Find item with requested number and delete it
-//        for (String resultElement : result) {
-//
-//            Order order = gsonBuilder.create().fromJson(resultElement, Order.class);
-//
-//            if (Objects.equals(order.getCartProductDto().getItemNumber(), itemNumber)) {
-//                result.remove(resultElement);
-//                break;
-//            }
-//        }
-//
-//        // Delete previous list from redis
-//        jedis.del(key);
-//
-//        // Save new list with updated cart
-//        for (String updatedElement : result) {
-//            jedis.rpush(key, updatedElement);
-//        }
-//
-//        jedis.close();
-//    }
+    @Transactional
+    public void removeFromCart(Long productId, UUID customerId) {
+        String key = CART_CACHE_KEY + customerId;
+
+        try (Jedis jedis = new Jedis(redisHost, redisPort)) {
+            List<String> cartItems = jedis.lrange(key, 0, -1);
+
+            List<String> updatedCartItems = cartItems.stream()
+                    .map(orderJson -> GSON.fromJson(orderJson, Order.class))
+                    .filter(order -> !Objects.equals(order.getProductDto().id(), productId))
+                    .map(GSON::toJson)
+                    .toList();
+
+            jedis.del(key);
+
+            if (!updatedCartItems.isEmpty()) {
+                jedis.rpush(key, updatedCartItems.toArray(new String[0]));
+            }
+        }
+    }
 
 //    private CartDto returnCartList(double totalCost, List<Order> cartItems, UUID userId) {
 //        Cart userCart = Cart.builder()

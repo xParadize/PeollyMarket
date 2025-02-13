@@ -2,6 +2,7 @@ package com.peolly.ordermicroservice.controllers;
 
 import com.peolly.ordermicroservice.dto.AddToCartDto;
 import com.peolly.ordermicroservice.dto.ApiResponse;
+import com.peolly.ordermicroservice.dto.RemoveFromCartDto;
 import com.peolly.ordermicroservice.exceptions.IncorrectSearchPathException;
 import com.peolly.ordermicroservice.services.CartService;
 import io.jsonwebtoken.Claims;
@@ -52,18 +53,19 @@ public class CartController {
                                            @RequestHeader("Authorization") String authorizationHeader) {
         String jwt = authorizationHeader.replace("Bearer ", "");
         UUID userId = UUID.fromString(extractUserIdFromJwt(jwt));
-        cartService.addToCart(addToCartDto, userId);
-        return new ResponseEntity<>(new ApiResponse(true, "Added to cart"), HttpStatus.OK);
+        cartService.addToCart(addToCartDto.productId(), userId);
+        return new ResponseEntity<>(new ApiResponse(true, "Added to Cart"), HttpStatus.OK);
     }
 
-//    @Operation(summary = "Remove product from user cart")
-//    @DeleteMapping("/delete/{itemNumber}")
-//    public ResponseEntity<ApiResponse> deleteCartItem(@PathVariable("itemNumber") Long itemNumber, Principal actualUser) {
-//        User requestUser = usersService.findByUsername(actualUser.getName());
-//        UUID userId = requestUser.getId();
-//        cartService.deleteItem(itemNumber, userId);
-//        return new ResponseEntity<>(new ApiResponse(true, "Removed from cart"), HttpStatus.OK);
-//    }
+    @Operation(summary = "Remove product from user cart")
+    @DeleteMapping("/remove-item")
+    public ResponseEntity<?> removeItemFromCart(@RequestBody RemoveFromCartDto removeFromCartDto,
+                                                @RequestHeader("Authorization") String authorizationHeader) {
+        String jwt = authorizationHeader.replace("Bearer ", "");
+        UUID userId = UUID.fromString(extractUserIdFromJwt(jwt));
+        cartService.removeFromCart(removeFromCartDto.productId(), userId);
+        return new ResponseEntity<>(new ApiResponse(true, "Removed from Cart"), HttpStatus.OK);
+    }
 
     public String extractUserIdFromJwt(String jwt) {
         Claims claims = Jwts.parser()
