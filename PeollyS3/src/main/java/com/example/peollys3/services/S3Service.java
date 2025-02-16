@@ -27,6 +27,12 @@ public class S3Service {
     private final FileUtils fileUtils;
     private final S3KafkaProducer s3KafkaProducer;
 
+    /**
+     * Uploads a file to MinIO and saves its metadata.
+     *
+     * @param file  the uploaded file.
+     * @param email the associated email.
+     */
     @Transactional
     public void uploadFile(MultipartFile file, String email) {
         try {
@@ -49,6 +55,11 @@ public class S3Service {
         s3KafkaProducer.sendFileLinkToEmail(generateShareLink(fileName), email);
     }
 
+    /**
+     * Ensures that the MinIO bucket exists before uploading.
+     *
+     * @throws Exception if bucket creation fails.
+     */
     @SneakyThrows
     private void createMinioBucket() {
         boolean exists = minioClient.bucketExists(BucketExistsArgs.builder()
@@ -61,6 +72,12 @@ public class S3Service {
         }
     }
 
+    /**
+     * Uploads the file to the MinIO storage.
+     *
+     * @param inputStream the file input stream.
+     * @param fileName    the name of the file.
+     */
     @SneakyThrows
     private void saveFileToS3(InputStream inputStream, String fileName) {
         minioClient.putObject(PutObjectArgs.builder()
@@ -70,6 +87,12 @@ public class S3Service {
                 .build());
     }
 
+    /**
+     * Generates a presigned URL for accessing the uploaded file.
+     *
+     * @param fileName the name of the file.
+     * @return the generated share link.
+     */
     @SneakyThrows
     private String generateShareLink(String fileName) {
         String shareLink = minioClient.getPresignedObjectUrl(
@@ -82,6 +105,11 @@ public class S3Service {
         return shareLink;
     }
 
+    /**
+     * Saves the file link metadata to the repository.
+     *
+     * @param fileName the name of the uploaded file.
+     */
     private void saveLink(String fileName) {
         FileLink fileLink = FileLink.builder()
                 .fileUrl(generateShareLink(fileName))

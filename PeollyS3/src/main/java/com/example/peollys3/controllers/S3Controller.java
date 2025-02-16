@@ -14,6 +14,12 @@ import org.springframework.web.multipart.MultipartFile;
 public class S3Controller {
     private final S3Service s3Service;
 
+    /**
+     * Handles file upload requests and delegates to the S3 service.
+     *
+     * @param file  the uploaded file.
+     * @param email the email associated with the file.
+     */
     @PostMapping("/upload")
     public void uploadFile(@RequestParam("file") MultipartFile file,
                            @RequestParam("email") String email) {

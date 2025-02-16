@@ -15,6 +15,12 @@ public class S3KafkaProducer {
     private final KafkaTemplate<String, GenericRecord> kafkaTemplate;
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
+    /**
+     * Sends a file upload link to an email using Kafka.
+     *
+     * @param uploadLink the link to the uploaded file.
+     * @param email      the recipient's email.
+     */
     public void sendFileLinkToEmail(String uploadLink, String email) {
         ProductValidationErrorsEvent event = ProductValidationErrorsEvent.newBuilder()
                 .setUploadLink(uploadLink)
