@@ -15,7 +15,5 @@ create table public.product
     evaluation     double precision        not null,
     discount       integer
                                            references public.discount
-                                               on delete set null,
-    created_at     timestamp default now() not null,
-    updated_at     timestamp
+                                               on delete set null
 );
