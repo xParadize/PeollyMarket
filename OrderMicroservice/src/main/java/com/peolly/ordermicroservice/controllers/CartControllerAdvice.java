@@ -1,6 +1,7 @@
 package com.peolly.ordermicroservice.controllers;
 
 import com.peolly.ordermicroservice.dto.ApiResponse;
+import com.peolly.ordermicroservice.exceptions.EmptyCartException;
 import com.peolly.ordermicroservice.exceptions.ProductNotFoundException;
 import com.peolly.ordermicroservice.exceptions.UserServiceUnavailableException;
 import lombok.AllArgsConstructor;
@@ -23,6 +24,12 @@ public class CartControllerAdvice {
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
     public ResponseEntity<ApiResponse> handleUserServiceUnavailable(UserServiceUnavailableException e) {
         return new ResponseEntity<>(new ApiResponse(false, e.getMessage()), HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
+    @ExceptionHandler(EmptyCartException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<ApiResponse> handleEmptyCartException(EmptyCartException e) {
+        return new ResponseEntity<>(new ApiResponse(false, e.getMessage()), HttpStatus.NOT_FOUND);
     }
 }
 

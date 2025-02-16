@@ -6,6 +6,7 @@ import org.hibernate.proxy.HibernateProxy;
 import org.springframework.data.redis.core.RedisHash;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -67,5 +68,21 @@ public class Product implements Serializable {
     @Override
     public final int hashCode() {
         return this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode() : getClass().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "(" +
+                "id = " + id + ", " +
+                "name = " + name + ", " +
+                "description = " + description + ", " +
+                "image = " + image + ", " +
+                "companyId = " + companyId + ", " +
+                "price = " + price + ", " +
+                "storageAmount = " + storageAmount + ", " +
+                "evaluation = " + evaluation + ", " +
+                "discount = " + discount + ", " +
+                "feedbacks = " + feedbacks + ", " +
+                "keywords = " + keywords + ")";
     }
 }

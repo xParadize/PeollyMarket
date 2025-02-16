@@ -32,6 +32,11 @@
           <package value="com.example.peollys3" />
         </packages>
       </persistence-unit>
+      <persistence-unit moduleName="OrderMicroservice" name="Default">
+        <packages>
+          <package value="com.peolly.ordermicroservice" />
+        </packages>
+      </persistence-unit>
     </persistence-units>
   </component>
 </project>

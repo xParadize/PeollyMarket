@@ -2,22 +2,27 @@ package com.peolly.ordermicroservice.services;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.peolly.ordermicroservice.dto.CartDto;
+import com.peolly.ordermicroservice.exceptions.EmptyCartException;
+import com.peolly.ordermicroservice.exceptions.ProductNotFoundException;
 import com.peolly.ordermicroservice.external.ProductDto;
+import com.peolly.ordermicroservice.models.Cart;
 import com.peolly.ordermicroservice.models.Order;
 import com.peolly.ordermicroservice.util.CartRestService;
 import com.peolly.ordermicroservice.util.LocalDateTimeDeserializer;
 import com.peolly.ordermicroservice.util.LocalDateTimeSerializer;
 import com.peolly.ordermicroservice.util.OrderIdGenerator;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import redis.clients.jedis.Jedis;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,33 +42,65 @@ public class CartService {
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeSerializer())
             .create();
 
-//    @Transactional(readOnly = true)
-//    public CartDto listCartProducts(UUID userId) {
-//
-//        Jedis jedis = new Jedis("localhost", 6379);
-//
-//        List<String> stringOrders = jedis.lrange("Cart:" + userId, 0, -1);
-//        if (stringOrders.isEmpty()) throw new EmptyCartException();
-//        List<Order> allUserOrders = new ArrayList<>();
-//
-//        double totalcost = 0.0;
-//
-//        GsonBuilder gsonBuilder = new GsonBuilder();
-//        gsonBuilder.registerTypeAdapter(LocalDateTime.class, new LocalDateTimeDeserializer());
-//
-//        for (String strOrder : stringOrders) {
-//
-//            Order order = gsonBuilder.create().fromJson(strOrder, Order.class);
-//            allUserOrders.add(order);
-//
-//            Product orderProduct = productsRepository.findById(order.getCartProductDto().getItemNumber()).orElse(null);
-//            totalcost += orderProduct.getPrice();
-//        }
-//
-//        jedis.close();
-//
-//        return returnCartList(totalcost, allUserOrders, userId);
-//    }
+    @Transactional(readOnly = true)
+    public CartDto listCartProducts(UUID customerId) {
+        String key = CART_CACHE_KEY + customerId;
+
+        try (Jedis jedis = new Jedis(redisHost, redisPort)) {
+            List<String> stringOrders = jedis.lrange(key, 0, -1);
+            if (stringOrders.isEmpty()) {
+                throw new EmptyCartException("Cart is Empty :(");
+            }
+
+            List<Order> allUserOrders = stringOrders.stream()
+                    .map(orderJson -> GSON.fromJson(orderJson, Order.class))
+                    .collect(Collectors.toList());
+
+            List<ProductDto> updatedProducts = allUserOrders.stream()
+                    .map(order -> {
+                        try {
+                            ProductDto updatedProduct = cartRestService.getProductInfo(order.getProductDto().id());
+                            order.setProductDto(updatedProduct);
+                            return updatedProduct;
+                        } catch (ProductNotFoundException e) {
+                            throw new RuntimeException("Error while getting product info: " + e.getMessage());
+                        }
+                    })
+                    .toList();
+            updateOrderInCache(customerId, allUserOrders);
+
+            double totalCost = updatedProducts.stream()
+                    .mapToDouble(ProductDto::price)
+                    .sum();
+
+            return returnCartList(totalCost, allUserOrders, customerId);
+        }
+    }
+
+    private CartDto returnCartList(double totalCost, List<Order> cartItems, UUID customerId) {
+        Cart userCart = Cart.builder()
+                .userId(customerId)
+                .orders(cartItems)
+                .build();
+        CartDto cartToReturn = CartDto.builder()
+                .cart(userCart)
+                .itemsCount(cartItems.size())
+                .totalCost(totalCost)
+                .priceWithDiscount(totalCost)
+                .build();
+        return cartToReturn;
+    }
+
+    private void updateOrderInCache(UUID customerId, List<Order> updatedOrders) {
+        String key = CART_CACHE_KEY + customerId;
+
+        try (Jedis jedis = new Jedis(redisHost, redisPort)) {
+            jedis.del(key);
+            for (Order order : updatedOrders) {
+                jedis.rpush(key, GSON.toJson(order));
+            }
+        }
+    }
 
     @Transactional
     public void addToCart(Long productId, UUID customerId) {
@@ -102,34 +139,4 @@ public class CartService {
             }
         }
     }
-
-//    private CartDto returnCartList(double totalCost, List<Order> cartItems, UUID userId) {
-//        Cart userCart = Cart.builder()
-//                .userId(userId)
-//                .orders(cartItems)
-//                // TODO: sales and discounts
-//                .build();
-//
-//        CartDto cartToReturn = CartDto.builder()
-//                .cart(userCart)
-//                .itemsCount(cartItems.size())
-//                .totalCost(totalCost)
-//                // TODO: sales and discounts
-//                .priceWithDiscount(totalCost)
-//                .build();
-//
-//        return cartToReturn;
-//    }
-//
-//    public CartProductDto convertProductToCartProductDto(Product product) {
-//        CartProductDto dtoToSave = CartProductDto.builder()
-//                .itemNumber(product.getId())
-//                .itemName(product.getName())
-//                .itemDescription(product.getDescription())
-//                .image(product.getImage())
-//                .organizationName(product.getOrganization().getName())
-//                .itemPrice(product.getPrice())
-//                .build();
-//        return dtoToSave;
-//    }
 }

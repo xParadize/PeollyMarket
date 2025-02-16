@@ -2,6 +2,7 @@ package com.peolly.ordermicroservice.controllers;
 
 import com.peolly.ordermicroservice.dto.AddToCartDto;
 import com.peolly.ordermicroservice.dto.ApiResponse;
+import com.peolly.ordermicroservice.dto.CartDto;
 import com.peolly.ordermicroservice.dto.RemoveFromCartDto;
 import com.peolly.ordermicroservice.exceptions.IncorrectSearchPathException;
 import com.peolly.ordermicroservice.services.CartService;
@@ -38,14 +39,14 @@ public class CartController {
         throw new IncorrectSearchPathException();
     }
 
-//    @Operation(summary = "Get user cart: list of products and cart price")
-//    @GetMapping()
-//    public ResponseEntity<CartDto> getCartProducts(Principal actualUser) {
-//        User requestUser = usersService.findByUsername(actualUser.getName());
-//        UUID userId = requestUser.getId();
-//        CartDto cartDto = cartService.listCartProducts(userId);
-//        return new ResponseEntity<>(cartDto, HttpStatus.OK);
-//    }
+    @Operation(summary = "Get user cart")
+    @GetMapping()
+    public ResponseEntity<?> getCartProducts(@RequestHeader("Authorization") String authorizationHeader) {
+        String jwt = authorizationHeader.replace("Bearer ", "");
+        UUID userId = UUID.fromString(extractUserIdFromJwt(jwt));
+        CartDto userCart = cartService.listCartProducts(userId);
+        return new ResponseEntity<>(userCart, HttpStatus.OK);
+    }
 
     @Operation(summary = "Add product to user cart")
     @PostMapping("/add-item")
@@ -64,7 +65,7 @@ public class CartController {
         String jwt = authorizationHeader.replace("Bearer ", "");
         UUID userId = UUID.fromString(extractUserIdFromJwt(jwt));
         cartService.removeFromCart(removeFromCartDto.productId(), userId);
-        return new ResponseEntity<>(new ApiResponse(true, "Removed from Cart"), HttpStatus.OK);
+        return new ResponseEntity<>(new ApiResponse(true, "Removed from Cart"), HttpStatus.NO_CONTENT);
     }
 
     public String extractUserIdFromJwt(String jwt) {

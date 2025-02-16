@@ -3,6 +3,8 @@ package com.peolly.productmicroservice.services;
 import com.peolly.productmicroservice.dto.CreateProductRequest;
 import com.peolly.productmicroservice.dto.ProductDto;
 import com.peolly.productmicroservice.dto.ProductMapper;
+import com.peolly.productmicroservice.dto.UpdateProductRequest;
+import com.peolly.productmicroservice.exceptions.ProductNotFoundException;
 import com.peolly.productmicroservice.kafka.ProductKafkaProducer;
 import com.peolly.productmicroservice.models.*;
 import com.peolly.productmicroservice.repositories.ProductRepository;
@@ -11,6 +13,7 @@ import com.peolly.productmicroservice.util.ProductDataValidator;
 import com.peolly.productmicroservice.util.ProductFileProcessor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
@@ -28,6 +31,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -43,14 +47,14 @@ public class ProductService {
     private final ProductKafkaProducer productKafkaProducer;
     private final BatchSizeCalculator batchSizeCalculator;
 
-    @Cacheable(value = "product", key = "#id")
+    @Cacheable(value = "product", key = "#id", unless = "#result == null")
     @Transactional(readOnly = true)
-    public Product findProductById(Long id) {
-        return productRepository.findProductById(id).orElse(null);
+    public Optional<Product> findProductById(Long id) {
+        return productRepository.findProductById(id);
     }
 
     @Transactional
-    public void validateProductsInFile(MultipartFile file, String email) {
+    public void validateProducts(MultipartFile file, String email) {
         List<ProductCsvRepresentation> representations = productFileProcessor.parseCsv(file);
         List<ProductValidationSummary> validationErrorReports = productDataValidator.getProductsValidationResult(representations);
 
@@ -71,7 +75,24 @@ public class ProductService {
     }
 
     @Transactional
-    public boolean isProductValid(CreateProductRequest createProductRequest) {
+    public void saveProducts(List<ProductCsvRepresentation> productsCsv) {
+        for (ProductCsvRepresentation p : productsCsv) {
+            System.out.println(p.toCsvString());
+        }
+
+        int batchSize = batchSizeCalculator.getBatchSize();
+        for (int i = 0; i < productsCsv.size(); i += batchSize) {
+            int end = Math.min(i + batchSize, productsCsv.size());
+            List<Product> batch = productsCsv.subList(i, end).stream()
+                    .map(this::convertCsvRepresentationToProduct)
+                    .toList();
+            productRepository.saveAll(batch);
+            productRepository.flush();
+        }
+    }
+
+    @Transactional
+    public boolean validateProduct(CreateProductRequest createProductRequest) {
         ProductDto productDto = productMapper.toDto(createProductRequest);
         Product product = convertDtoToProduct(productDto);
 
@@ -92,20 +113,30 @@ public class ProductService {
     }
 
     @Transactional
-    public void saveProducts(List<ProductCsvRepresentation> productsCsv) {
-        for (ProductCsvRepresentation p : productsCsv) {
-            System.out.println(p.toCsvString());
-        }
+    public boolean validateUpdatedProduct(Long productId, UpdateProductRequest updateProductRequest) {
+        ProductDto productDto = productMapper.toDto(updateProductRequest);
+        Product updatedProduct = convertDtoToProduct(productDto);
 
-        int batchSize = batchSizeCalculator.getBatchSize();
-        for (int i = 0; i < productsCsv.size(); i += batchSize) {
-            int end = Math.min(i + batchSize, productsCsv.size());
-            List<Product> batch = productsCsv.subList(i, end).stream()
-                    .map(this::convertCsvRepresentationToProduct)
-                    .toList();
-            productRepository.saveAll(batch);
-            productRepository.flush();
-        }
+        Product existingProduct = productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException("Product not found."));
+
+        boolean isNameDuplicate = getExistingProductNames().stream()
+                .anyMatch(name -> name.equals(updatedProduct.getName()) && !name.equals(existingProduct.getName()));
+
+        boolean isDescriptionDuplicate = getExistingProductDescriptions().stream()
+                .anyMatch(description -> description.equals(updatedProduct.getDescription()) && !description.equals(existingProduct.getDescription()));
+
+        return !isNameDuplicate && !isDescriptionDuplicate;
+    }
+
+    @Transactional
+    @CacheEvict(value = "product", key = "#id")
+    public Product updateProduct(Long id, UpdateProductRequest newData) {
+        Product existingProduct = productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException("Product not found."));
+        productMapper.updateProductData(newData, existingProduct);
+        productRepository.saveAndFlush(existingProduct);
+        return existingProduct;
     }
 
     private void createCsvWithValidationErrors(List<ProductValidationSummary> validationSummary, String email) {

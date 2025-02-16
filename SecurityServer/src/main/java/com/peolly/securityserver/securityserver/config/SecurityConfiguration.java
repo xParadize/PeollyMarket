@@ -51,6 +51,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/cart/**").hasRole("USER")
                         .requestMatchers("/profile/**").hasRole("USER")
                         .requestMatchers("/payment/**").hasRole("USER")
+                        .requestMatchers("/store/update-product/**").hasAnyRole("COMPANY_MANAGER", "ADMIN")
                         .requestMatchers("/company/**").hasAnyRole("COMPANY_MANAGER", "ADMIN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
