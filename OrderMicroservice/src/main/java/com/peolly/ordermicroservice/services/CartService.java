@@ -42,6 +42,13 @@ public class CartService {
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeSerializer())
             .create();
 
+    /**
+     * Retrieves the products in the user's cart from Redis cache.
+     *
+     * @param customerId the unique identifier of the customer.
+     * @return CartDto object containing the user's cart details including items and total cost.
+     * @throws EmptyCartException if the cart is empty.
+     */
     @Transactional(readOnly = true)
     public CartDto listCartProducts(UUID customerId) {
         String key = CART_CACHE_KEY + customerId;
@@ -77,6 +84,14 @@ public class CartService {
         }
     }
 
+    /**
+     * Constructs and returns a CartDto object with cart details.
+     *
+     * @param totalCost  the total cost of the products in the cart.
+     * @param cartItems  the list of orders in the cart.
+     * @param customerId the unique identifier of the customer.
+     * @return CartDto object containing cart details including item count and total cost.
+     */
     private CartDto returnCartList(double totalCost, List<Order> cartItems, UUID customerId) {
         Cart userCart = Cart.builder()
                 .userId(customerId)
@@ -91,6 +106,12 @@ public class CartService {
         return cartToReturn;
     }
 
+    /**
+     * Updates the user's cart in Redis cache with the latest order information.
+     *
+     * @param customerId    the unique identifier of the customer.
+     * @param updatedOrders the list of updated orders to be stored in the cache.
+     */
     private void updateOrderInCache(UUID customerId, List<Order> updatedOrders) {
         String key = CART_CACHE_KEY + customerId;
 
@@ -102,6 +123,12 @@ public class CartService {
         }
     }
 
+    /**
+     * Adds a product to the user's cart and updates the Redis cache.
+     *
+     * @param productId  the unique identifier of the product to be added.
+     * @param customerId the unique identifier of the customer.
+     */
     @Transactional
     public void addToCart(Long productId, UUID customerId) {
         try (Jedis jedis = new Jedis(redisHost, redisPort)) {
@@ -119,6 +146,12 @@ public class CartService {
         }
     }
 
+    /**
+     * Removes a product from the user's cart by its product ID and updates the Redis cache.
+     *
+     * @param productId  the unique identifier of the product to be removed.
+     * @param customerId the unique identifier of the customer.
+     */
     @Transactional
     public void removeFromCart(Long productId, UUID customerId) {
         String key = CART_CACHE_KEY + customerId;

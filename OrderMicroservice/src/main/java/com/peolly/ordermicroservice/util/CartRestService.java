@@ -12,6 +12,13 @@ import org.springframework.web.client.RestTemplate;
 public class CartRestService {
     private final RestTemplate restTemplate = new RestTemplate();
 
+    /**
+     * Fetches product information from an external store service.
+     *
+     * @param productId the unique identifier of the product.
+     * @return ProductDto object containing product details.
+     * @throws ProductNotFoundException if the product is not found or the request fails.
+     */
     public ProductDto getProductInfo(Long productId) {
         String url = "http://localhost:8003/store/product/" + productId;
 

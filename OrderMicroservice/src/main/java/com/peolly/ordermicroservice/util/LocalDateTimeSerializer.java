@@ -12,6 +12,15 @@ import java.time.format.DateTimeFormatter;
 
 @Component
 public class LocalDateTimeSerializer implements JsonSerializer<LocalDateTime> {
+
+    /**
+     * Serializes a LocalDateTime object into a JSON element.
+     *
+     * @param src        the LocalDateTime object to serialize.
+     * @param typeOfSrc  the actual type of the source object.
+     * @param context    the serialization context.
+     * @return JsonElement representing the serialized LocalDateTime.
+     */
     @Override
     public JsonElement serialize(LocalDateTime src, Type typeOfSrc, JsonSerializationContext context) {
         return new JsonPrimitive(src.format(DateTimeFormatter.ofPattern("dd-MM-yyyy'T'HH:mm:ss.SSSSSS")));

@@ -14,6 +14,15 @@ import java.util.Locale;
 @Component
 public class LocalDateTimeDeserializer implements JsonDeserializer<LocalDateTime> {
 
+    /**
+     * Deserializes a JSON element into a LocalDateTime object.
+     *
+     * @param json      the JSON element representing the date-time.
+     * @param typeOfT   the type of the object to deserialize to.
+     * @param context   the deserialization context.
+     * @return LocalDateTime object parsed from the JSON element.
+     * @throws JsonParseException if parsing fails or the format is invalid.
+     */
     @Override
     public LocalDateTime deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
             throws JsonParseException {

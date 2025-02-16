@@ -39,6 +39,12 @@ public class CartController {
         throw new IncorrectSearchPathException();
     }
 
+    /**
+     * Retrieves the products in the user's cart.
+     *
+     * @param authorizationHeader the Authorization header containing the JWT token.
+     * @return ResponseEntity containing the user's cart as a CartDto object and HTTP status 200 (OK).
+     */
     @Operation(summary = "Get user cart")
     @GetMapping()
     public ResponseEntity<?> getCartProducts(@RequestHeader("Authorization") String authorizationHeader) {
@@ -48,6 +54,13 @@ public class CartController {
         return new ResponseEntity<>(userCart, HttpStatus.OK);
     }
 
+    /**
+     * Adds a product to the user's cart.
+     *
+     * @param addToCartDto        the DTO containing product information to be added to the cart.
+     * @param authorizationHeader the Authorization header containing the JWT token.
+     * @return ResponseEntity with an ApiResponse indicating the success of the operation and HTTP status 200 (OK).
+     */
     @Operation(summary = "Add product to user cart")
     @PostMapping("/add-item")
     public ResponseEntity<?> addItemToCart(@RequestBody AddToCartDto addToCartDto,
@@ -58,6 +71,13 @@ public class CartController {
         return new ResponseEntity<>(new ApiResponse(true, "Added to Cart"), HttpStatus.OK);
     }
 
+    /**
+     * Removes a product from the user's cart.
+     *
+     * @param removeFromCartDto   the DTO containing product information to be removed from the cart.
+     * @param authorizationHeader the Authorization header containing the JWT token.
+     * @return ResponseEntity with an ApiResponse indicating the success of the operation and HTTP status 204 (NO_CONTENT).
+     */
     @Operation(summary = "Remove product from user cart")
     @DeleteMapping("/remove-item")
     public ResponseEntity<?> removeItemFromCart(@RequestBody RemoveFromCartDto removeFromCartDto,
@@ -68,6 +88,12 @@ public class CartController {
         return new ResponseEntity<>(new ApiResponse(true, "Removed from Cart"), HttpStatus.NO_CONTENT);
     }
 
+    /**
+     * Extracts the user ID from a JWT token.
+     *
+     * @param jwt the JWT token.
+     * @return the user ID extracted from the JWT token.
+     */
     public String extractUserIdFromJwt(String jwt) {
         Claims claims = Jwts.parser()
                 .setSigningKey(getSigningKey())
@@ -77,6 +103,11 @@ public class CartController {
         return claims.get("id", String.class);
     }
 
+    /**
+     * Retrieves the signing key used to verify JWT tokens.
+     *
+     * @return the signing Key object used for HMAC SHA encryption.
+     */
     private Key getSigningKey() {
         byte[] keyBytes = Decoders.BASE64.decode(jwtSigningKey);
         return Keys.hmacShaKeyFor(keyBytes);
