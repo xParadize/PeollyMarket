@@ -18,7 +18,13 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class ProductDataValidator {
     private final ProductRepository productRepository;
-
+    /**
+     * Validates a list of product CSV representations and returns validation summaries
+     * containing any errors or duplicate issues.
+     *
+     * @param products the list of product representations from CSV.
+     * @return a list of validation summaries.
+     */
     public List<ProductValidationSummary> getProductsValidationResult(List<@Valid ProductCsvRepresentation> products) {
         List<ProductValidationSummary> validationSummaries = new ArrayList<>();
         for (ProductCsvRepresentation p : products) {
@@ -34,6 +40,12 @@ public class ProductDataValidator {
         return validationSummaries;
     }
 
+    /**
+     * Validates a single product CSV representation and returns a list of validation error reports.
+     *
+     * @param productCsvRepresentation the product representation to validate.
+     * @return a list of validation error reports.
+     */
     private List<ProductValidationReport> getErrorFields(@Valid ProductCsvRepresentation productCsvRepresentation) {
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         Validator validator = factory.getValidator();
@@ -55,6 +67,12 @@ public class ProductDataValidator {
         return reports;
     }
 
+    /**
+     * Checks if a product CSV representation has duplicate fields based on existing products in the database.
+     *
+     * @param productCsvRepresentation the product representation to check for duplicates.
+     * @return a list of duplicate error reports if duplicates are found.
+     */
     private List<ProductsDuplicateReport> getProductsDuplicateFields(@Valid ProductCsvRepresentation productCsvRepresentation) {
         Set<String> existingNames = productRepository.findAllProductNames();
         Set<String> existingDescriptions = productRepository.findAllProductDescriptions();
@@ -72,6 +90,14 @@ public class ProductDataValidator {
         }
     }
 
+    /**
+     * Creates a duplicate report based on existing product names and descriptions.
+     *
+     * @param productRepresentation the product representation to check.
+     * @param existingNames         the set of existing product names.
+     * @param existingDescriptions  the set of existing product descriptions.
+     * @return a ProductsDuplicateReport indicating whether the product is a duplicate.
+     */
     private ProductsDuplicateReport createDuplicateReport(ProductCsvRepresentation productRepresentation, Set<String> existingNames, Set<String> existingDescriptions) {
         boolean isNameDuplicate = existingNames.contains(productRepresentation.getName());
         boolean isDescriptionDuplicate = existingDescriptions.contains(productRepresentation.getDescription());
@@ -85,6 +111,14 @@ public class ProductDataValidator {
                 .build();
     }
 
+    /**
+     * Constructs an error message indicating which fields are duplicated.
+     *
+     * @param productRepresentation the product representation being checked.
+     * @param isNameDuplicate       whether the name is a duplicate.
+     * @param isDescriptionDuplicate whether the description is a duplicate.
+     * @return a formatted duplicate error message.
+     */
     private static String makeDuplicateErrorMessage(ProductCsvRepresentation productRepresentation, boolean isNameDuplicate, boolean isDescriptionDuplicate) {
         String duplicateData = "";
         if (isNameDuplicate && isDescriptionDuplicate) {

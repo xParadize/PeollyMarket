@@ -52,6 +52,12 @@ public class KafkaProducerConfiguration {
     @Value("${spring.kafka.properties.schema.registry.url}")
     private String schemaRegistryUrl;
 
+    /**
+     * Configures and provides a Kafka ProducerFactory with Avro serialization support.
+     *
+     * @param <T> the type of the message payload.
+     * @return the configured ProducerFactory.
+     */
     @Bean
     public <T> ProducerFactory<String, T> producerFactory() {
         Map<String, Object> config = new HashMap<>();
@@ -68,6 +74,12 @@ public class KafkaProducerConfiguration {
         return new DefaultKafkaProducerFactory<>(config);
     }
 
+    /**
+     * Creates and provides a KafkaTemplate for sending messages.
+     *
+     * @param <T> the type of the message payload.
+     * @return the configured KafkaTemplate.
+     */
     @Bean
     public <T> KafkaTemplate<String, T> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());

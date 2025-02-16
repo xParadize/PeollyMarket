@@ -23,6 +23,12 @@ import java.util.concurrent.TimeUnit;
 @Component
 @RequiredArgsConstructor
 public class ProductFileProcessor {
+    /**
+     * Parses a CSV file containing product data using multithreading for performance optimization.
+     *
+     * @param file the CSV file containing product data.
+     * @return a list of parsed product representations.
+     */
     public List<ProductCsvRepresentation> parseCsv(MultipartFile file) {
         List<ProductCsvRepresentation> productCsvRepresentations = Collections.synchronizedList(new ArrayList<>());
 
@@ -59,6 +65,12 @@ public class ProductFileProcessor {
         return productCsvRepresentations;
     }
 
+    /**
+     * Converts a list of CSV lines into product representations using a CSV parsing strategy.
+     *
+     * @param subList the subset of CSV lines to process.
+     * @return a list of parsed ProductCsvRepresentation objects.
+     */
     private static List<ProductCsvRepresentation> getProductCsvRepresentations(List<String> subList) {
         String csvContent = String.join("\n", subList);
         StringReader stringReader = new StringReader(csvContent);

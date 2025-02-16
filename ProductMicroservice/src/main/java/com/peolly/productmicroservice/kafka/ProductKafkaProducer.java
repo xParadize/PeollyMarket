@@ -15,6 +15,12 @@ public class ProductKafkaProducer {
     private final KafkaTemplate<String, GenericRecord> kafkaTemplate;
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
+    /**
+     * Sends a "product-created" event to a Kafka topic.
+     *
+     * @param productName the name of the created product.
+     * @param email       the email associated with the product creator.
+     */
     public void sendProductCreated(String productName, String email) {
         ProductCreatedEvent event = new ProductCreatedEvent(productName, email);
         ProducerRecord<String, GenericRecord> record = new ProducerRecord<>(

@@ -32,6 +32,12 @@ public class ProductController {
         throw new IncorrectSearchPath();
     }
 
+    /**
+     * Retrieves and displays product information by its ID.
+     *
+     * @param id the unique identifier of the product.
+     * @return ResponseEntity containing the product information if found, otherwise an error message.
+     */
     @Operation(summary = "Shows one product by its id")
     @GetMapping("/product/{id}")
     public ResponseEntity<?> showProductInfo(@PathVariable("id") Long id) {
@@ -42,6 +48,13 @@ public class ProductController {
         return new ResponseEntity<>(convertProductToDto(productOpt.get()), HttpStatus.OK);
     }
 
+    /**
+     * Creates a new product based on the provided request data.
+     *
+     * @param createProductRequest the request object containing product details.
+     * @param bindingResult        holds validation results of the request body.
+     * @return ResponseEntity<ApiResponse> indicating success or validation errors.
+     */
     @Operation(summary = "Create product")
     @PostMapping(value = "/create-product")
     public ResponseEntity<ApiResponse> createProduct(@RequestBody @Valid CreateProductRequest createProductRequest, BindingResult bindingResult) {
@@ -57,6 +70,14 @@ public class ProductController {
         return new ResponseEntity<>(new ApiResponse(true, "Product added. You will receive an email notification with more information."), HttpStatus.OK);
     }
 
+    /**
+     * Updates an existing product with the given ID using provided data.
+     *
+     * @param updateProductRequest the request object containing updated product details.
+     * @param id                   the unique identifier of the product to update.
+     * @param bindingResult        holds validation results of the request body.
+     * @return ResponseEntity containing the updated product or an error message.
+     */
     @PatchMapping(value = "/update-product/{id}")
     public ResponseEntity<?> updateProduct(@RequestBody @Valid UpdateProductRequest updateProductRequest,
                                                      @PathVariable Long id,
@@ -80,7 +101,13 @@ public class ProductController {
         return ResponseEntity.ok(updatedProduct);
     }
 
-
+    /**
+     * Processes a CSV file to create multiple products and sends a validation report via email.
+     *
+     * @param file  the CSV file containing product data.
+     * @param email the email address to receive the validation report.
+     * @return ResponseEntity<ApiResponse> indicating whether the products were sent for validation.
+     */
     @Operation(summary = "Create products")
     @PostMapping(value = "/create-products", consumes = "multipart/form-data")
     public ResponseEntity<ApiResponse> createProducts(
@@ -99,6 +126,12 @@ public class ProductController {
         return new ResponseEntity<>(new ApiResponse(true, "Products sent to validation."), HttpStatus.OK);
     }
 
+    /**
+     * Collects and formats field validation errors from the BindingResult.
+     *
+     * @param bindingResult the object holding field validation errors.
+     * @return a formatted string containing all field errors.
+     */
     private String getFieldsErrors(BindingResult bindingResult) {
         String errorMessage = bindingResult.getFieldErrors()
                 .stream()
@@ -107,6 +140,12 @@ public class ProductController {
         return errorMessage;
     }
 
+    /**
+     * Converts a Product entity into a ProductDto object.
+     *
+     * @param product the Product entity to be converted.
+     * @return the corresponding ProductDto object.
+     */
     private ProductDto convertProductToDto(Product product) {
         return productMapper.toDto(product);
     }

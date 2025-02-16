@@ -45,6 +45,11 @@ public class KafkaConsumerConfiguration {
     @Value("${spring.kafka.properties.schema.registry.url}")
     private String schemaRegistryUrl;
 
+    /**
+     * Configures and provides a Kafka ConsumerFactory with Avro deserialization support.
+     *
+     * @return the configured ConsumerFactory.
+     */
     @Bean
     public ConsumerFactory<String, Object> consumerFactory() {
         Map<String, Object> config = new HashMap<>();
@@ -59,6 +64,13 @@ public class KafkaConsumerConfiguration {
         return new DefaultKafkaConsumerFactory<>(config);
     }
 
+    /**
+     * Creates a ConcurrentKafkaListenerContainerFactory with a custom error handling strategy.
+     *
+     * @param consumerFactory the ConsumerFactory for Kafka consumers.
+     * @param kafkaTemplate   the KafkaTemplate for error handling.
+     * @return a configured Kafka listener container factory.
+     */
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, ? extends SpecificRecordBase> kafkaListenerContainerFactory(
             ConsumerFactory<String, Object> consumerFactory, KafkaTemplate kafkaTemplate) {

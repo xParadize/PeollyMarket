@@ -47,12 +47,25 @@ public class ProductService {
     private final ProductKafkaProducer productKafkaProducer;
     private final BatchSizeCalculator batchSizeCalculator;
 
+    /**
+     * Finds a product by its ID.
+     *
+     * @param id the product ID.
+     * @return an Optional containing the found product, or an empty Optional if the product is not found.
+     */
     @Cacheable(value = "product", key = "#id", unless = "#result == null")
     @Transactional(readOnly = true)
     public Optional<Product> findProductById(Long id) {
         return productRepository.findProductById(id);
     }
 
+    /**
+     * Validates a list of products from a CSV file and performs the appropriate actions
+     * based on validation errors.
+     *
+     * @param file  the CSV file containing products.
+     * @param email the email to send the validation error report (if any).
+     */
     @Transactional
     public void validateProducts(MultipartFile file, String email) {
         List<ProductCsvRepresentation> representations = productFileProcessor.parseCsv(file);
@@ -74,6 +87,11 @@ public class ProductService {
         }
     }
 
+    /**
+     * Saves a list of products to the database in batches.
+     *
+     * @param productsCsv the list of product representations from CSV.
+     */
     @Transactional
     public void saveProducts(List<ProductCsvRepresentation> productsCsv) {
         for (ProductCsvRepresentation p : productsCsv) {
@@ -91,6 +109,12 @@ public class ProductService {
         }
     }
 
+    /**
+     * Validates whether a new product can be created by checking for duplicate names and descriptions.
+     *
+     * @param createProductRequest the product creation request data.
+     * @return true if the product can be created, otherwise false.
+     */
     @Transactional
     public boolean validateProduct(CreateProductRequest createProductRequest) {
         ProductDto productDto = productMapper.toDto(createProductRequest);
@@ -106,12 +130,25 @@ public class ProductService {
         return true;
     }
 
+    /**
+     * Saves a product to the database and sends a product creation event to Kafka.
+     *
+     * @param product the product to save.
+     * @param email   the email to notify about the product creation.
+     */
     @Transactional
     public void saveProduct(Product product, String email) {
         productRepository.save(product);
         productKafkaProducer.sendProductCreated(product.getName(), email);
     }
 
+    /**
+     * Validates whether a product update is possible by checking for duplicate names and descriptions.
+     *
+     * @param productId          the ID of the product.
+     * @param updateProductRequest the new product update request data.
+     * @return true if the update is allowed, otherwise false.
+     */
     @Transactional
     public boolean validateUpdatedProduct(Long productId, UpdateProductRequest updateProductRequest) {
         ProductDto productDto = productMapper.toDto(updateProductRequest);
@@ -129,6 +166,13 @@ public class ProductService {
         return !isNameDuplicate && !isDescriptionDuplicate;
     }
 
+    /**
+     * Updates an existing product's data and clears the cache.
+     *
+     * @param id      the ID of the product.
+     * @param newData the new data for the update.
+     * @return the updated product object.
+     */
     @Transactional
     @CacheEvict(value = "product", key = "#id")
     public Product updateProduct(Long id, UpdateProductRequest newData) {
@@ -139,6 +183,12 @@ public class ProductService {
         return existingProduct;
     }
 
+    /**
+     * Generates a CSV file containing validation errors and sends it via email.
+     *
+     * @param validationSummary the list of validation errors.
+     * @param email             the recipient's email.
+     */
     private void createCsvWithValidationErrors(List<ProductValidationSummary> validationSummary, String email) {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(byteArrayOutputStream, StandardCharsets.UTF_8))) {
@@ -165,6 +215,12 @@ public class ProductService {
         sendValidationReportToEmail(byteArrayOutputStream.toByteArray(), email);
     }
 
+    /**
+     * Sends a CSV file with validation error reports to the specified email.
+     *
+     * @param csvData the CSV data as a byte array.
+     * @param email   the recipient's email.
+     */
     private void sendValidationReportToEmail(byte[] csvData, String email) {
         RestTemplate restTemplate = new RestTemplate();
 
@@ -187,102 +243,12 @@ public class ProductService {
         restTemplate.postForEntity("http://localhost:8010/s3/upload", requestEntity, String.class);
     }
 
-//    @Transactional(readOnly = true)
-//    public List<ProductDto> productsPagination(int page, int productsPerPage) {
-//        List<Product> products = productRepository.findAll(PageRequest.of(page, productsPerPage)).getContent();
-//        if (products.isEmpty()) throw new IncorrectSearchPath();
-//
-//        List<ProductDto> productsToReturn = products.stream()
-//                .map(this::convertProductToDto)
-//                .toList();
-//        return productsToReturn;
-//    }
-
-//    @Transactional(readOnly = true)
-//    public List<ProductDto> findProductsByCompanyIdWithPagination(Long companyId, int page, int productsPerPage)
-//            throws ExecutionException, InterruptedException {
-//        int offset = calculatePageOffset(page, productsPerPage);
-//
-//        GetCompanyByIdResponseEvent companyData = fetchCompanyData(companyId);
-//        validateCompanyHasProducts(companyData.companyId());
-//
-//        List<Product> products = fetchProductsForPage(companyData.companyId(), offset, productsPerPage);
-//        validatePageHasProducts(products);
-//
-//        return convertProductsToDtos(products);
-//    }
-
-//    private int calculatePageOffset(int page, int productsPerPage) {
-//        return page * productsPerPage;
-//    }
-
-//    private GetCompanyByIdResponseEvent fetchCompanyData(Long companyId) throws ExecutionException, InterruptedException {
-//        productKafkaProducer.sendGetCompanyById(companyId);
-//        CompletableFuture<GetCompanyByIdResponseEvent> future = new CompletableFuture<>();
-//        productKafkaListenerFutureWaiter.setCompanyIdResponse(future);
-//
-//        GetCompanyByIdResponseEvent companyData = future.get();
-//        if (companyData.companyName() == null) {
-//            throw new CompanyNotFoundException();
-//        }
-//        return companyData;
-//    }
-
-//    private void validateCompanyHasProducts(Long companyId) {
-//        long totalProductsCount = productRepository.countProductsByCompanyId(companyId);
-//        if (totalProductsCount == 0) {
-//            throw new CompanyHasNoProductsException();
-//        }
-//    }
-//
-//    private List<Product> fetchProductsForPage(Long companyId, int offset, int productsPerPage) {
-//        return productRepository.findProductsByCompanyIdWithPagination(companyId, offset, productsPerPage);
-//    }
-//
-//    private void validatePageHasProducts(List<Product> products) {
-//        if (products.isEmpty()) {
-//            throw new IncorrectSearchPath();
-//        }
-//    }
-
-
-
-//    @Transactional
-//    @KafkaListener(topics = "send-get-company-by-id-response", groupId = "org-deli-queuing-company")
-//    public void consumeGetCompanyByIdResponseEvent(GetCompanyByIdResponseEvent event) {
-//        CompletableFuture<GetCompanyByIdResponseEvent> future = productKafkaListenerFutureWaiter.getCompanyIdResponse();
-//        future.complete(event);
-//    }
-//
-//    @Transactional(readOnly = true)
-//    public ProductDTO getProductInfo(Long productId) {
-//        Optional<Product> optionalProduct = productsRepository.findById(productId);
-//
-//        if (optionalProduct.isPresent()) {
-//            Product productToConvert = optionalProduct.get();
-//            return convertProductToDto(productToConvert);
-//        }
-//        return null;
-//    }
-//
-
-
-//    @CacheEvict(value = "product", key = "#product.id")
-//    public void updateProduct(Product product) {
-//        System.out.println("Product updated in DB");
-//        productRepository.save(product);
-//    }
-//
-//    @Transactional(readOnly = true)
-//    public List<Product> getAllProductsWithDiscount() {
-//        return productsRepository.findAllProductsWithDiscount();
-//    }
-//
-//    @Transactional
-//    public void changeDiscount(Integer discountId, Long productId) {
-//        productsRepository.changeDiscount(discountId, productId);
-//    }
-
+    /**
+     * Converts a product DTO to a Product entity with predefined values.
+     *
+     * @param productDto the product DTO.
+     * @return the Product entity.
+     */
     private Product convertDtoToProduct(ProductDto productDto) {
         Product product = productMapper.toEntity(productDto);
         product.setImage(emptyProductFile);
@@ -291,6 +257,12 @@ public class ProductService {
         return product;
     }
 
+    /**
+     * Converts a CSV product representation into a Product entity with predefined values.
+     *
+     * @param csvRepresentation the product representation from CSV.
+     * @return the Product entity.
+     */
     private Product convertCsvRepresentationToProduct(ProductCsvRepresentation csvRepresentation) {
         Product product = productMapper.toDto(csvRepresentation);
         product.setImage(emptyProductFile);
@@ -299,11 +271,21 @@ public class ProductService {
         return product;
     }
 
+    /**
+     * Retrieves a set of existing product descriptions.
+     *
+     * @return a set of product descriptions.
+     */
     @Transactional(readOnly = true)
     public Set<String> getExistingProductDescriptions() {
         return productRepository.findAllProductDescriptions();
     }
 
+    /**
+     * Retrieves a set of existing product names.
+     *
+     * @return a set of product names.
+     */
     @Transactional(readOnly = true)
     public Set<String> getExistingProductNames() {
         return productRepository.findAllProductNames();

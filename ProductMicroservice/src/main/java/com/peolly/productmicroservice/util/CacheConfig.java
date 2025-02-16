@@ -17,7 +17,12 @@ import java.util.Map;
 
 @Configuration
 public class CacheConfig {
-
+    /**
+     * Configures the default Redis cache settings, disabling null value caching
+     * and setting JSON serialization for values.
+     *
+     * @return the Redis cache configuration.
+     */
     @Bean
     public RedisCacheConfiguration defaultCacheConfiguration() {
         return RedisCacheConfiguration.defaultCacheConfig()
@@ -25,6 +30,12 @@ public class CacheConfig {
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()));
     }
 
+    /**
+     * Configures the product-specific Redis cache with a 14-day expiration time,
+     * disabling null value caching and using JSON serialization.
+     *
+     * @return the Redis cache configuration for products.
+     */
     @Bean
     public RedisCacheConfiguration productCacheConfiguration() {
         return RedisCacheConfiguration.defaultCacheConfig()
@@ -33,11 +44,21 @@ public class CacheConfig {
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()));
     }
 
+    /**
+     * Creates a Jedis connection factory for Redis.
+     *
+     * @return the JedisConnectionFactory instance.
+     */
     @Bean
     JedisConnectionFactory jedisConnectionFactory() {
         return new JedisConnectionFactory();
     }
 
+    /**
+     * Configures a RedisTemplate for caching operations.
+     *
+     * @return the RedisTemplate instance.
+     */
     @Bean
     public RedisTemplate<String, Object> redisTemplate() {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
@@ -47,6 +68,12 @@ public class CacheConfig {
         return template;
     }
 
+    /**
+     * Configures and returns a RedisCacheManager with custom cache settings.
+     *
+     * @param redisConnectionFactory the Redis connection factory.
+     * @return the configured RedisCacheManager.
+     */
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();

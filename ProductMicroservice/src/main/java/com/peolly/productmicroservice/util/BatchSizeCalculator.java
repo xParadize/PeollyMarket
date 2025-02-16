@@ -4,6 +4,12 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class BatchSizeCalculator {
+    /**
+     * Determines the optimal batch size for database operations based on memory, database connections,
+     * and concurrency constraints.
+     *
+     * @return the computed batch size.
+     */
     public int getBatchSize() {
         long availableMemory = 500 * 1024 * 1024; // 500 MB
         long avgObjectSize = 1024 * 10;          // Средний размер объекта 10 KB
@@ -15,6 +21,17 @@ public class BatchSizeCalculator {
         return batchSize;
     }
 
+    /**
+     * Calculates the batch size based on available memory, database connection limits,
+     * concurrent threads, and a maximum batch size constraint.
+     *
+     * @param availableMemory         the available memory in bytes.
+     * @param avgObjectSize           the estimated size of each object in bytes.
+     * @param maxDbConnections        the maximum allowed database connections.
+     * @param expectedConcurrentThreads the expected number of concurrent threads.
+     * @param maxAllowedBatchSize     the upper limit for batch size.
+     * @return the optimal batch size.
+     */
     private int calculateBatchSize(long availableMemory, long avgObjectSize,
                                          int maxDbConnections, int expectedConcurrentThreads, 
                                          int maxAllowedBatchSize) {
