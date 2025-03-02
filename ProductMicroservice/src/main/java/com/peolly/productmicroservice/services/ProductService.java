@@ -8,6 +8,7 @@ import com.peolly.productmicroservice.exceptions.ProductNotFoundException;
 import com.peolly.productmicroservice.kafka.ProductKafkaProducer;
 import com.peolly.productmicroservice.models.*;
 import com.peolly.productmicroservice.repositories.ProductRepository;
+import com.peolly.productmicroservice.repositories.ReservedProductRepository;
 import com.peolly.productmicroservice.util.BatchSizeCalculator;
 import com.peolly.productmicroservice.util.ProductDataValidator;
 import com.peolly.productmicroservice.util.ProductFileProcessor;
@@ -94,10 +95,6 @@ public class ProductService {
      */
     @Transactional
     public void saveProducts(List<ProductCsvRepresentation> productsCsv) {
-        for (ProductCsvRepresentation p : productsCsv) {
-            System.out.println(p.toCsvString());
-        }
-
         int batchSize = batchSizeCalculator.getBatchSize();
         for (int i = 0; i < productsCsv.size(); i += batchSize) {
             int end = Math.min(i + batchSize, productsCsv.size());
@@ -266,7 +263,7 @@ public class ProductService {
     private Product convertCsvRepresentationToProduct(ProductCsvRepresentation csvRepresentation) {
         Product product = productMapper.toDto(csvRepresentation);
         product.setImage(emptyProductFile);
-        product.setStorageAmount(0);
+        product.setStorageAmount(100);
         product.setEvaluation(0.0);
         return product;
     }
@@ -289,5 +286,10 @@ public class ProductService {
     @Transactional(readOnly = true)
     public Set<String> getExistingProductNames() {
         return productRepository.findAllProductNames();
+    }
+
+    @Transactional
+    public void decreaseProductStorageAmount(Long productId, int amount) {
+        productRepository.decreaseProductStorageAmount(productId, amount);
     }
 }

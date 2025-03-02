@@ -36,4 +36,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
         @Modifying
         @Query(value = "UPDATE product SET discount = :discount_id WHERE id = :product_id", nativeQuery = true)
         void changeDiscount(@Param("discount_id") Integer discountId, @Param("product_id") Long productId);
+
+        @Modifying
+        @Query(value = "UPDATE product SET storage_amount = storage_amount - :amount WHERE id = :product_id", nativeQuery = true)
+        void decreaseProductStorageAmount(@Param("product_id") Long productId, @Param("amount") int amount);
 }

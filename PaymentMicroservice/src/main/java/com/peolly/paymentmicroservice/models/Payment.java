@@ -24,17 +24,17 @@ public class Payment {
     @Column
     private UUID userId;
 
-    @JoinColumn(name = "card_number")
+    @Column
     private String cardNumber;
 
     @Column
     private Double totalPrice;
 
     @Column
-    private int totalItems;
+    private LocalDateTime paidAt;
 
     @Column
-    private LocalDateTime paidAt;
+    private Long orderId;
 
     @Override
     public final boolean equals(Object o) {
@@ -59,6 +59,7 @@ public class Payment {
                 "userId = " + userId + ", " +
                 "cardNumber = " + cardNumber + ", " +
                 "totalPrice = " + totalPrice + ", " +
-                "paidAt = " + paidAt + ")";
+                "paidAt = " + paidAt + ", " +
+                "orderId = " + orderId + ")";
     }
 }

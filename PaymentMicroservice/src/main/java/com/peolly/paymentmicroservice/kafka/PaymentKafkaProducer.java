@@ -1,6 +1,5 @@
 package com.peolly.paymentmicroservice.kafka;
 
-import com.peolly.paymentmicroservice.models.CardValidationErrorFields;
 import com.peolly.schemaregistry.PaymentMethodValidationResult;
 import lombok.AllArgsConstructor;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -11,7 +10,6 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.List;
 import java.util.UUID;
 
 @Component

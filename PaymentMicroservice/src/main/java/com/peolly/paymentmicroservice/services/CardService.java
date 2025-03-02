@@ -3,6 +3,7 @@ package com.peolly.paymentmicroservice.services;
 import com.peolly.paymentmicroservice.dto.CardDto;
 import com.peolly.paymentmicroservice.dto.CardMapper;
 import com.peolly.paymentmicroservice.enums.CardType;
+import com.peolly.paymentmicroservice.exceptions.CardNotExistsException;
 import com.peolly.paymentmicroservice.kafka.PaymentKafkaProducer;
 import com.peolly.paymentmicroservice.models.Card;
 import com.peolly.paymentmicroservice.repositories.CardRepository;
@@ -23,12 +24,23 @@ public class CardService {
     private final CardRepository cardRepository;
     private final PaymentKafkaProducer paymentKafkaProducer;
     private final CardMapper cardMapper;
+    private final CardDataValidator cardDataValidator;
 
 //    @Transactional(readOnly = true)
 //    public Card getCardNumberByUserId(UUID userId) {
 //        Optional<Card> card = cardRepository.findByUserId(userId);
 //        return card.orElse(null);
 //    }
+
+    @Transactional(readOnly = true)
+    public boolean isCardValidForPayment(String cardNumber, UUID userId, double totalCost) {
+        Card cardToCheck = getCardByCardNumber(cardNumber);
+        if (cardToCheck == null) {
+            throw new CardNotExistsException("Card doesn't exist or not isn't your payment method.");
+        }
+       return cardDataValidator.isCardValid(cardToCheck, userId, totalCost);
+
+    }
 
     @Transactional
     public void savePaymentMethod(CardDto dto, UUID userId) {
@@ -39,13 +51,13 @@ public class CardService {
     }
 
     @Transactional
-    public void takeMoneyFromCard(String cardNumber) {
-        cardRepository.takeMoneyFromCard(BigDecimal.valueOf(11), cardNumber);
+    public void takeMoneyFromCard(String cardNumber, double amount) {
+        cardRepository.takeMoneyFromCard(BigDecimal.valueOf(amount), cardNumber);
     }
 
     @Transactional
-    public void addMoneyToCard(String cardNumber) {
-        cardRepository.addMoneyToCard(BigDecimal.valueOf(11), cardNumber);
+    public void addMoneyToCard(String cardNumber, double amount) {
+        cardRepository.addMoneyToCard(BigDecimal.valueOf(amount), cardNumber);
     }
 
     private CardType getCardType(String number) {

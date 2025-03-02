@@ -1,9 +1,6 @@
 package com.peolly.ordermicroservice.controllers;
 
-import com.peolly.ordermicroservice.dto.AddToCartDto;
-import com.peolly.ordermicroservice.dto.ApiResponse;
-import com.peolly.ordermicroservice.dto.CartDto;
-import com.peolly.ordermicroservice.dto.RemoveFromCartDto;
+import com.peolly.ordermicroservice.dto.*;
 import com.peolly.ordermicroservice.exceptions.IncorrectSearchPathException;
 import com.peolly.ordermicroservice.services.CartService;
 import io.jsonwebtoken.Claims;
@@ -85,6 +82,16 @@ public class CartController {
         String jwt = authorizationHeader.replace("Bearer ", "");
         UUID userId = UUID.fromString(extractUserIdFromJwt(jwt));
         cartService.removeFromCart(removeFromCartDto.productId(), userId);
+        return new ResponseEntity<>(new ApiResponse(true, "Removed from Cart"), HttpStatus.NO_CONTENT);
+    }
+
+    @Operation(summary = "Perform payment")
+    @DeleteMapping("/perform-payment")
+    public ResponseEntity<?> pay(@RequestBody PerformPaymentDto performPaymentDto,
+                                 @RequestHeader("Authorization") String authorizationHeader) {
+        String jwt = authorizationHeader.replace("Bearer ", "");
+        UUID userId = UUID.fromString(extractUserIdFromJwt(jwt));
+        cartService.performPayment(performPaymentDto, userId);
         return new ResponseEntity<>(new ApiResponse(true, "Removed from Cart"), HttpStatus.NO_CONTENT);
     }
 

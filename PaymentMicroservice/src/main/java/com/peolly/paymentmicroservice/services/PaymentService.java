@@ -1,39 +1,56 @@
-//package com.peolly.paymentmicroservice.services;
-//
-//import com.peolly.paymentmicroservice.models.Card;
-//import lombok.RequiredArgsConstructor;
-//import org.springframework.stereotype.Service;
-//import org.springframework.transaction.annotation.Transactional;
-//
-//
-//import java.io.FileNotFoundException;
-//import java.time.LocalDateTime;
-//import java.util.List;
-//import java.util.UUID;
-//
-//@Service
-//@RequiredArgsConstructor
-//public class PaymentService {
-//
-//    private final CardService cardService;
-//    private final CardDataValidator cardDataValidator;
-//    private final UserService usersService;
-//    private final CartService cartService;
-//    private final MailService mailService;
-//    private final PaymentRepository paymentRepository;
-//    private final CardRepository cardRepository;
-//    private final GeneratePdf generatePdf;
-//
-//    @Transactional
-//    public void performPayment(UUID userId, String cardNumber) throws FileNotFoundException {
-//        subtractMoney(userId, cardNumber);
-//        String checkPath = generatePdf.generateEcheck(userId);
-//        sendEmail(userId, checkPath);
-//        Double totalCost = getTotalCost(userId);
-//        int totalItems = getTotalItems(userId);
-//        deleteCartAfterPayment(userId);
-//        setPaymentStatus(userId, cardNumber, totalCost, totalItems);
-//    }
+package com.peolly.paymentmicroservice.services;
+
+import com.peolly.paymentmicroservice.models.Payment;
+import com.peolly.paymentmicroservice.repositories.PaymentRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+public class PaymentService {
+    private final CardService cardService;
+    private final PaymentRepository paymentRepository;
+
+    @Transactional(readOnly = true)
+    public boolean isCardValidForPayment(String cardNumber, UUID userId, double totalCost) {
+        return cardService.isCardValidForPayment(cardNumber, userId, totalCost);
+    }
+
+    @Transactional
+    public void performPayment(String cardNumber, UUID userId, double totalCost, Long orderId) {
+        subtractMoney(cardNumber, totalCost);
+        savePayment(cardNumber, userId, totalCost, orderId);
+
+
+        String checkPath = generatePdf.generateEcheck(userId);
+        sendEmail(userId, checkPath);
+        Double totalCost = getTotalCost(userId);
+        int totalItems = getTotalItems(userId);
+        deleteCartAfterPayment(userId);
+
+    }
+
+    @Transactional
+    public void subtractMoney(String cardNumber, double totalCost) {
+        cardService.takeMoneyFromCard(cardNumber, totalCost);
+    }
+
+    @Transactional
+    public void savePayment(String cardNumber, UUID userId, double totalCost, Long orderId) {
+        Payment payment = Payment.builder()
+                .userId(userId)
+                .cardNumber(cardNumber)
+                .totalPrice(totalCost)
+                .paidAt(LocalDateTime.now())
+                .orderId(orderId)
+                .build();
+        paymentRepository.save(payment);
+    }
+
 //
 //    public boolean isPaymentCredentialsOk(UUID userId, String cardNumber) {
 //        return isCardLinkedToUser(userId, cardNumber) && isCardNotExpired(cardNumber);
@@ -44,10 +61,7 @@
 //    }
 //
 //    private boolean isCardNotExpired(String cardNumber) {
-//
 //        Card cardToCheck = cardService.getUserCardByCardNumber(cardNumber);
-//
-//
 //        return cardDataValidator.isCardValid();
 //    }
 //
@@ -58,21 +72,14 @@
 //        return cardBalance >= totalCost;
 //    }
 //
-//    private Double getTotalCost(UUID userId) {
-//        CartDto cartData = cartService.listCartProducts(userId);
-//        return cartData.getTotalCost();
-//    }
+
 //
 //    private int getTotalItems(UUID userId) {
 //        CartDto cartData = cartService.listCartProducts(userId);
 //        return cartData.getTotalItems();
 //    }
 //
-//    @Transactional
-//    public void subtractMoney(UUID userId, String cardNumber) {
-//        Double moneyToPay = getTotalCost(userId);
-//        cardRepository.subtractMoneyForPurchase(cardNumber, moneyToPay);
-//    }
+
 //
 //    public void sendEmail(UUID userId, String checkPath) {
 //        User user = usersService.findById(userId);
@@ -87,18 +94,8 @@
 //        jedis.close();
 //    }
 //
-//    @Transactional
-//    public void setPaymentStatus(UUID userId, String cardNumber, Double totalCost, int totalItems) {
-//        Payment payment = Payment.builder()
-//                .userId(userId)
-//                .cardNumber(cardNumber)
-//                .totalPrice(totalCost)
-//                .totalItems(totalItems)
-//                .paidAt(LocalDateTime.now())
-//                .build();
-//        paymentRepository.save(payment);
-//    }
-//
+
+
 //    @Transactional(readOnly = true)
 //    public int getUserGoodsPurchased(User user) {
 //        List<Payment> payments = paymentRepository.findAllByUserId(user.getId());
@@ -118,4 +115,4 @@
 //        }
 //        return totalPrice;
 //    }
-//}
+}

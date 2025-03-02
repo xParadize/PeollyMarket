@@ -3,6 +3,7 @@ package com.peolly.ordermicroservice.services;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.peolly.ordermicroservice.dto.CartDto;
+import com.peolly.ordermicroservice.dto.PerformPaymentDto;
 import com.peolly.ordermicroservice.exceptions.EmptyCartException;
 import com.peolly.ordermicroservice.exceptions.ProductNotFoundException;
 import com.peolly.ordermicroservice.external.ProductDto;
@@ -171,5 +172,20 @@ public class CartService {
                 jedis.rpush(key, updatedCartItems.toArray(new String[0]));
             }
         }
+    }
+
+    @Transactional
+    public void performPayment(PerformPaymentDto performPaymentDto, UUID userId) {
+        // Создаем запись о заказе в таблице заказов (OrderMS)
+        // резерв на складе -  /store/api/v1/reserve-products (OrderMS -> ProductMS)
+        // валидация карты - http://localhost:8005/payment/api/v1/process_payment (OrderMS -> PaymentMS)
+        // снимаем деньги (PaymentMS)
+        // Создаем запись о платеже в таблице платежей + даем сюда номер заказа (PaymentMS)
+
+        // чек в с3 (OrderMS -> S3)
+        // емеил с чеком (S3 -> NotifMS)
+        // Удаляем заказ (OrderMS -> Redis)
+        // Удаляем n-товаров с магазина (OrderMS -> ProductMS)
+
     }
 }

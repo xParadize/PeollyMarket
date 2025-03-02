@@ -28,14 +28,6 @@ public class CompanyController {
         throw new IncorrectSearchPath();
     }
 
-    @Operation(summary = "Create product")
-    @PostMapping(value = "/create-product", consumes = {"multipart/form-data"})
-    public ResponseEntity<ApiResponse> createProduct(@RequestPart("file")MultipartFile file,
-                                                     @RequestParam("email") String email) throws Exception {
-        companyService.checkErrorsInFile(file, email);
-        return new ResponseEntity<>(new ApiResponse(true, "Products sent to validation."), HttpStatus.OK);
-    }
-
 //    @PostMapping("/add")
 //    @Operation(summary = "Create company ticket")
 //    public ResponseEntity<?> createTicket(@RequestBody OrganizationTicketDto organizationTicketDto, Principal actualUser) {
