@@ -26,11 +26,11 @@ public class PaymentService {
         savePayment(cardNumber, userId, totalCost, orderId);
 
 
-        String checkPath = generatePdf.generateEcheck(userId);
-        sendEmail(userId, checkPath);
-        Double totalCost = getTotalCost(userId);
-        int totalItems = getTotalItems(userId);
-        deleteCartAfterPayment(userId);
+//        String checkPath = generatePdf.generateEcheck(userId);
+//        sendEmail(userId, checkPath);
+//        Double totalCost = getTotalCost(userId);
+//        int totalItems = getTotalItems(userId);
+//        deleteCartAfterPayment(userId);
 
     }
 

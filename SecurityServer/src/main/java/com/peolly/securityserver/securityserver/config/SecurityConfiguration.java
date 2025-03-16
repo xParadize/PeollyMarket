@@ -54,7 +54,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/store/update-product/**").hasAnyRole("COMPANY_MANAGER", "ADMIN")
                         .requestMatchers("/company/**").hasAnyRole("COMPANY_MANAGER", "ADMIN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/users/**").hasRole("ADMIN")
+                        .requestMatchers("/api/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())

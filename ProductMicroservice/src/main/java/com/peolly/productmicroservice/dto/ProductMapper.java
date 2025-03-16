@@ -13,4 +13,8 @@ public interface ProductMapper {
     Product toDto(ProductCsvRepresentation productCsvRepresentation);
     Product toEntity(ProductDto productDto);
     void updateProductData(UpdateProductRequest updateProductRequest, @MappingTarget Product product);
+
+    default String map(CharSequence value) {
+        return value == null ? null : value.toString();
+    }
 }

@@ -1,0 +1,47 @@
+{
+  "type": "record",
+  "name": "CreateItemEvent",
+  "namespace": "com.peolly.schemaregistry",
+  "fields": [
+    {
+      "name": "id",
+      "type": "long"
+    },
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "description",
+      "type": "string"
+    },
+    {
+      "name": "companyId",
+      "type": "long"
+    },
+    {
+      "name": "categoryId",
+      "type": "long"
+    },
+    {
+      "name": "image",
+      "type": "string"
+    },
+    {
+      "name": "price",
+      "type": "double"
+    },
+    {
+      "name": "discount",
+      "type": "double"
+    },
+    {
+      "name": "quantity",
+      "type": "int"
+    },
+    {
+      "name": "email",
+      "type": "string"
+    }
+  ]
+}

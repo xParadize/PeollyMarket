@@ -26,6 +26,9 @@
         <module>PeollyS3</module>
         <module>OrderMicroservice</module>
         <module>eureka-server</module>
+        <module>StorageService</module>
+        <module>PricingService</module>
+        <module>CatalogService</module>
     </modules>
 
     <properties>

@@ -9,4 +9,8 @@ import org.mapstruct.ReportingPolicy;
         componentModel = MappingConstants.ComponentModel.SPRING)
 public interface UncheckedCardMapper {
     UncheckedCard toEntity(CardDto dto);
+
+    default String map(CharSequence value) {
+        return value == null ? null : value.toString();
+    }
 }

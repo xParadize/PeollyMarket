@@ -10,4 +10,8 @@ import org.mapstruct.ReportingPolicy;
         componentModel = MappingConstants.ComponentModel.SPRING)
 public interface ProductCsvRepresentationMapping {
     CreateProductEvent toEvent(ProductCsvRepresentation csvRepresentation);
+
+    default String map(CharSequence value) {
+        return value == null ? null : value.toString();
+    }
 }
