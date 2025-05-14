@@ -5,7 +5,11 @@ spring:
   config:
     import: optional:file:.env[.properties]
   application:
-    name: Product Microservice
+    name: Order Microservice
+  datasource:
+    username: ${POSTGRES_USERNAME}
+    url: jdbc:postgresql://localhost:5432/OrderService
+    password: ${POSTGRES_PASSWORD}
   jpa:
     properties:
       hibernate:
@@ -14,10 +18,6 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: false
-
-redis:
-  host: ${REDIS_HOST}
-  port: ${REDIS_PORT}
 
 
 security:

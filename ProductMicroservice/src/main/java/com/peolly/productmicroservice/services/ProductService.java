@@ -12,6 +12,7 @@ import com.peolly.productmicroservice.repositories.ReservedProductRepository;
 import com.peolly.productmicroservice.util.BatchSizeCalculator;
 import com.peolly.productmicroservice.util.ProductDataValidator;
 import com.peolly.productmicroservice.util.ProductFileProcessor;
+import com.peolly.schemaregistry.FileCategory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
@@ -232,6 +233,7 @@ public class ProductService {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("file", byteArrayResource);
         body.add("email", email);
+        body.add("fileCategory", FileCategory.ECHECK);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);

@@ -14,13 +14,7 @@ import java.util.UUID;
 @Repository
 public interface CardRepository extends JpaRepository<Card, Long> {
     Optional<Card> findByCardNumber(String cardNumber);
-    Optional<Card> findByUserId(UUID userId);
     void deleteCardByCardNumber(String cardNumber);
-    List<Card> findAllByUserId(UUID userId);
-
-    @Modifying
-    @Query(value = "UPDATE card SET available_money = card.available_money - ?2 WHERE card_number = ?1", nativeQuery = true)
-    void subtractMoneyForPurchase(String cardNumber, Double totalCost);
 
     @Modifying
     @Query(value = "UPDATE card SET available_money = card.available_money - ?1 WHERE card_number = ?2", nativeQuery = true)

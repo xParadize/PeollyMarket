@@ -4,6 +4,8 @@ import freemarker.template.Configuration;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -19,6 +21,8 @@ import java.util.UUID;
 public class MailSenderService {
     private final Configuration configuration;
     private final JavaMailSender mailSender;
+
+    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
     @Async
     @SneakyThrows
@@ -116,6 +120,27 @@ public class MailSenderService {
         Map<String, Object> model = new HashMap<>();
         model.put("uploadLink", uploadLink);
         configuration.getTemplate("product_validation_errors.ftlh").process(model, writer);
+        return writer.getBuffer().toString();
+    }
+
+    @Async
+    @SneakyThrows
+    public void sendOrderECheck(String uploadLink, String email) {
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, false, "UTF-8");
+        helper.setSubject("E-check");
+        helper.setTo(email);
+        String emailContent = getOrderECheck(uploadLink);
+        helper.setText(emailContent, true);
+        mailSender.send(mimeMessage);
+    }
+
+    @SneakyThrows
+    private String getOrderECheck(String uploadLink) {
+        StringWriter writer = new StringWriter();
+        Map<String, Object> model = new HashMap<>();
+        model.put("uploadLink", uploadLink);
+        configuration.getTemplate("e-check.ftlh").process(model, writer);
         return writer.getBuffer().toString();
     }
 

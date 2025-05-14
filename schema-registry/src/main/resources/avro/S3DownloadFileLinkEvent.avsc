@@ -1,0 +1,23 @@
+{
+  "type": "record",
+  "name": "S3DownloadFileLinkEvent",
+  "namespace": "com.peolly.schemaregistry",
+  "fields": [
+    {
+      "name": "fileCategory",
+      "type": {
+        "type": "enum",
+        "name": "FileCategory",
+        "symbols": ["PRODUCT_VALIDATION_REPORT", "ECHECK"]
+      }
+    },
+    {
+      "name": "uploadLink",
+      "type": "string"
+    },
+    {
+      "name": "receiverEmail",
+      "type": "string"
+    }
+  ]
+}

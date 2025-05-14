@@ -84,16 +84,21 @@ public class NotificationService {
     }
 
     @Transactional
-    @KafkaListener(topics = "product-validation-errors", groupId = "org-deli-queuing-s3")
-    public void consumeProductValidationEvent(ConsumerRecord<String, GenericRecord> message) {
+    @KafkaListener(topics = "download-file-link", groupId = "org-deli-queuing-s3")
+    public void consumeS3DownloadFileLinkEvent(ConsumerRecord<String, GenericRecord> message) {
         SpecificData specificData = configureSpecificData();
 
-        ProductValidationErrorsEvent event = (ProductValidationErrorsEvent) specificData.deepCopy(
-                ProductValidationErrorsEvent.SCHEMA$, message.value());
+        S3DownloadFileLinkEvent event = (S3DownloadFileLinkEvent) specificData.deepCopy(
+                S3DownloadFileLinkEvent.SCHEMA$, message.value());
 
-        mailSenderService.sendProductValidationErrorsEmail(
-                event.getUploadLink().toString(),
-                event.getReceiverEmail().toString());
+        switch (event.getFileCategory()) {
+            case PRODUCT_VALIDATION_REPORT -> mailSenderService.sendProductValidationErrorsEmail(
+                    event.getUploadLink().toString(),
+                    event.getReceiverEmail().toString());
+            case ECHECK -> mailSenderService.sendOrderECheck(
+                    event.getUploadLink().toString(),
+                    event.getReceiverEmail().toString());
+        }
     }
 
     @Transactional

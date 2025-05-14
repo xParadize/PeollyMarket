@@ -8,6 +8,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,6 +33,12 @@ public class CatalogController {
     @RequestMapping(value = "/**")
     public ResponseEntity<ApiResponse> handleNotFound() {
         throw new IncorrectSearchPath();
+    }
+
+    @Operation(summary = "Shows one product by its id")
+    @GetMapping("/item/{id}")
+    public ResponseEntity<?> getItemById(@PathVariable("id") Long id) {
+        return new ResponseEntity<>(catalogService.findItemById(id), HttpStatus.OK);
     }
 
     @PostMapping(value = "/create-product")

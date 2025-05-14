@@ -1,5 +1,6 @@
 package com.peolly.ordermicroservice.controllers;
 
+import com.itextpdf.text.DocumentException;
 import com.peolly.ordermicroservice.dto.*;
 import com.peolly.ordermicroservice.exceptions.IncorrectSearchPathException;
 import com.peolly.ordermicroservice.services.CartService;
@@ -11,6 +12,8 @@ import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +32,7 @@ public class CartController {
     private String jwtSigningKey;
 
     private final CartService cartService;
+    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
     @Hidden
     @RequestMapping(value = "/**")
@@ -47,7 +51,7 @@ public class CartController {
     public ResponseEntity<?> getCartProducts(@RequestHeader("Authorization") String authorizationHeader) {
         String jwt = authorizationHeader.replace("Bearer ", "");
         UUID userId = UUID.fromString(extractUserIdFromJwt(jwt));
-        CartDto userCart = cartService.listCartProducts(userId);
+        CartDto userCart = cartService.listCartItems(userId);
         return new ResponseEntity<>(userCart, HttpStatus.OK);
     }
 
@@ -64,7 +68,7 @@ public class CartController {
                                            @RequestHeader("Authorization") String authorizationHeader) {
         String jwt = authorizationHeader.replace("Bearer ", "");
         UUID userId = UUID.fromString(extractUserIdFromJwt(jwt));
-        cartService.addToCart(addToCartDto.productId(), userId);
+        cartService.addToCart(addToCartDto, userId);
         return new ResponseEntity<>(new ApiResponse(true, "Added to Cart"), HttpStatus.OK);
     }
 
@@ -85,14 +89,16 @@ public class CartController {
         return new ResponseEntity<>(new ApiResponse(true, "Removed from Cart"), HttpStatus.NO_CONTENT);
     }
 
-    @Operation(summary = "Perform payment")
-    @DeleteMapping("/perform-payment")
-    public ResponseEntity<?> pay(@RequestBody PerformPaymentDto performPaymentDto,
-                                 @RequestHeader("Authorization") String authorizationHeader) {
+    @Operation(summary = "Create order")
+    @PostMapping("/create-order")
+    public ResponseEntity<?> createOrder(@RequestBody PerformPaymentDto performPaymentDto,
+                                            @RequestHeader("Authorization") String authorizationHeader) throws DocumentException {
         String jwt = authorizationHeader.replace("Bearer ", "");
         UUID userId = UUID.fromString(extractUserIdFromJwt(jwt));
-        cartService.performPayment(performPaymentDto, userId);
-        return new ResponseEntity<>(new ApiResponse(true, "Removed from Cart"), HttpStatus.NO_CONTENT);
+        String email = extractUserEmailFromJwt(jwt);
+
+        cartService.processOrder(performPaymentDto, userId, email);
+        return new ResponseEntity<>(new ApiResponse(true, "Order went to delivery"), HttpStatus.OK);
     }
 
     /**
@@ -108,6 +114,15 @@ public class CartController {
                 .parseClaimsJws(jwt)
                 .getBody();
         return claims.get("id", String.class);
+    }
+
+    public String extractUserEmailFromJwt(String jwt) {
+        Claims claims = Jwts.parser()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(jwt)
+                .getBody();
+        return claims.get("email", String.class);
     }
 
     /**

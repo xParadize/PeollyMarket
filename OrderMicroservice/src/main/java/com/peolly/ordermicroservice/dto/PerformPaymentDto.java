@@ -1,5 +1,6 @@
 package com.peolly.ordermicroservice.dto;
 
-public class PerformPaymentDto {
-    String cardNumber;
+public record PerformPaymentDto (
+        String cardNumber
+) {
 }

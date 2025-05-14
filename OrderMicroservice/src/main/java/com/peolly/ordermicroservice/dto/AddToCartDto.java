@@ -3,6 +3,7 @@ package com.peolly.ordermicroservice.dto;
 import java.io.Serializable;
 
 public record AddToCartDto(
-        Long productId)
+        Long itemId,
+        int quantity)
 implements Serializable {
 }

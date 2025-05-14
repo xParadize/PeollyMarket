@@ -10,6 +10,6 @@ import org.springframework.web.bind.annotation.RequestBody;
     url = "http://localhost:8031"
 )
 public interface StorageServiceClient {
-    @PostMapping("/api/products/check-duplicate")
+    @PostMapping("/api/v1/storage/check-duplicate")
     Boolean isDuplicate(@RequestBody ItemDuplicateRequest request);
 }

@@ -66,11 +66,11 @@
     <div id="header">
         <h1>Your E-check</h1>
     </div>
-    <p>An e-check has been generated for your order.</p>
-    <p>All e-checks are stored in your personal account in the section "<a href="http://localhost:8080/profile/e-checks">E-checks</a>".</p>
+    <p>An e-check has been generated for your orderElement.</p>
+    <p>All e-checks are stored in your personal account in the section "<a href="#">E-checks</a>".</p>
     <br>
     <p>Deli Team</p>
-    <p><a href="http://localhost:8080/profile/check/${checkNumber}" class="button">Download e-check</a></p>
+    <p><a href="${uploadLink}" class="button">Download e-check</a></p>
     <div id="footer">
         <p>If you have any questions or need assistance, please contact our support team via email:</p>
         <p class="support-email">support@deli.com</p>

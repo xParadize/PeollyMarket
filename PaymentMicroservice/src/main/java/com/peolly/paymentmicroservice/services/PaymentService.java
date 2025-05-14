@@ -1,12 +1,13 @@
 package com.peolly.paymentmicroservice.services;
 
+import com.peolly.paymentmicroservice.dto.PaymentRequestDto;
+import com.peolly.paymentmicroservice.mappers.PaymentMapper;
 import com.peolly.paymentmicroservice.models.Payment;
 import com.peolly.paymentmicroservice.repositories.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -14,24 +15,18 @@ import java.util.UUID;
 public class PaymentService {
     private final CardService cardService;
     private final PaymentRepository paymentRepository;
+    private final PaymentMapper paymentMapper;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public boolean isCardValidForPayment(String cardNumber, UUID userId, double totalCost) {
-        return cardService.isCardValidForPayment(cardNumber, userId, totalCost);
+        boolean cardValidForPayment = cardService.isCardValidForPayment(cardNumber, userId, totalCost);
+        return cardValidForPayment;
     }
 
     @Transactional
-    public void performPayment(String cardNumber, UUID userId, double totalCost, Long orderId) {
-        subtractMoney(cardNumber, totalCost);
-        savePayment(cardNumber, userId, totalCost, orderId);
-
-
-//        String checkPath = generatePdf.generateEcheck(userId);
-//        sendEmail(userId, checkPath);
-//        Double totalCost = getTotalCost(userId);
-//        int totalItems = getTotalItems(userId);
-//        deleteCartAfterPayment(userId);
-
+    public void performPayment(PaymentRequestDto paymentRequestDto) {
+        subtractMoney(paymentRequestDto.cardNumber(), paymentRequestDto.totalCost());
+        savePayment(paymentRequestDto);
     }
 
     @Transactional
@@ -40,14 +35,8 @@ public class PaymentService {
     }
 
     @Transactional
-    public void savePayment(String cardNumber, UUID userId, double totalCost, Long orderId) {
-        Payment payment = Payment.builder()
-                .userId(userId)
-                .cardNumber(cardNumber)
-                .totalPrice(totalCost)
-                .paidAt(LocalDateTime.now())
-                .orderId(orderId)
-                .build();
+    public void savePayment(PaymentRequestDto paymentRequestDto) {
+        Payment payment = paymentMapper.toEntity(paymentRequestDto);
         paymentRepository.save(payment);
     }
 

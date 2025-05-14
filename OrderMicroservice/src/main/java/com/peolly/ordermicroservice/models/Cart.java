@@ -28,7 +28,7 @@ public class Cart implements Serializable {
     private UUID userId;
 
     @ElementCollection
-    private List<Order> orders;
+    private List<OrderElement> orderElements;
 
     @Override
     public final boolean equals(Object o) {
@@ -51,6 +51,6 @@ public class Cart implements Serializable {
         return getClass().getSimpleName() + "(" +
                 "id = " + id + ", " +
                 "userId = " + userId + ", " +
-                "orders = " + orders + ")";
+                "orders = " + orderElements + ")";
     }
 }
