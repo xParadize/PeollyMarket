@@ -4,6 +4,6 @@ import java.io.Serializable;
 
 public record RoleUpdateRequest(
         String role,
-        boolean add)
+        boolean isAdd)
 implements Serializable {
 }

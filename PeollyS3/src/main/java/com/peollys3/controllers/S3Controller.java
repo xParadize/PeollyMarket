@@ -2,6 +2,8 @@ package com.peollys3.controllers;
 
 import com.peolly.schemaregistry.FileCategory;
 import com.peollys3.services.S3Service;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +15,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/s3")
+@Tag(name = "S3 controller")
+@RequestMapping("/api/v1/s3")
 public class S3Controller {
     private final S3Service s3Service;
 
@@ -23,7 +26,8 @@ public class S3Controller {
      * @param file  the uploaded file.
      * @param email the email associated with the file.
      */
-    @PostMapping("/upload")
+    @Operation(summary = "Upload file")
+    @PostMapping("/files")
     public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file,
                                         @RequestParam("email") String email,
                                         @RequestParam("fileCategory") FileCategory fileCategory) {

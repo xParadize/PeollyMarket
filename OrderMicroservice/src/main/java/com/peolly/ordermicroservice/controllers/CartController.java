@@ -22,9 +22,9 @@ import org.springframework.web.bind.annotation.*;
 import java.security.Key;
 import java.util.UUID;
 
-@Tag(name = "User cart page")
 @RestController
-@RequestMapping("/cart")
+@RequestMapping("/api/v1/cart")
+@Tag(name = "Order controller")
 @RequiredArgsConstructor
 public class CartController {
 
@@ -32,7 +32,6 @@ public class CartController {
     private String jwtSigningKey;
 
     private final CartService cartService;
-    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
     @Hidden
     @RequestMapping(value = "/**")
@@ -46,7 +45,7 @@ public class CartController {
      * @param authorizationHeader the Authorization header containing the JWT token.
      * @return ResponseEntity containing the user's cart as a CartDto object and HTTP status 200 (OK).
      */
-    @Operation(summary = "Get user cart")
+    @Operation(summary = "Get cart")
     @GetMapping()
     public ResponseEntity<?> getCartProducts(@RequestHeader("Authorization") String authorizationHeader) {
         String jwt = authorizationHeader.replace("Bearer ", "");
@@ -62,8 +61,8 @@ public class CartController {
      * @param authorizationHeader the Authorization header containing the JWT token.
      * @return ResponseEntity with an ApiResponse indicating the success of the operation and HTTP status 200 (OK).
      */
-    @Operation(summary = "Add product to user cart")
-    @PostMapping("/add-item")
+    @Operation(summary = "Add item to cart")
+    @PostMapping("/items")
     public ResponseEntity<?> addItemToCart(@RequestBody AddToCartDto addToCartDto,
                                            @RequestHeader("Authorization") String authorizationHeader) {
         String jwt = authorizationHeader.replace("Bearer ", "");
@@ -75,22 +74,22 @@ public class CartController {
     /**
      * Removes a product from the user's cart.
      *
-     * @param removeFromCartDto   the DTO containing product information to be removed from the cart.
+     * @param itemId   item id.
      * @param authorizationHeader the Authorization header containing the JWT token.
      * @return ResponseEntity with an ApiResponse indicating the success of the operation and HTTP status 204 (NO_CONTENT).
      */
-    @Operation(summary = "Remove product from user cart")
-    @DeleteMapping("/remove-item")
-    public ResponseEntity<?> removeItemFromCart(@RequestBody RemoveFromCartDto removeFromCartDto,
+    @Operation(summary = "Remove item from cart")
+    @DeleteMapping("/items/{itemId}")
+    public ResponseEntity<?> removeItemFromCart(@PathVariable("itemId") Long itemId,
                                                 @RequestHeader("Authorization") String authorizationHeader) {
         String jwt = authorizationHeader.replace("Bearer ", "");
         UUID userId = UUID.fromString(extractUserIdFromJwt(jwt));
-        cartService.removeFromCart(removeFromCartDto.productId(), userId);
+        cartService.removeFromCart(itemId, userId);
         return new ResponseEntity<>(new ApiResponse(true, "Removed from Cart"), HttpStatus.NO_CONTENT);
     }
 
     @Operation(summary = "Create order")
-    @PostMapping("/create-order")
+    @PostMapping("/order")
     public ResponseEntity<?> createOrder(@RequestBody PerformPaymentDto performPaymentDto,
                                             @RequestHeader("Authorization") String authorizationHeader) throws DocumentException {
         String jwt = authorizationHeader.replace("Bearer ", "");

@@ -37,6 +37,21 @@
           <package value="com.peolly.ordermicroservice" />
         </packages>
       </persistence-unit>
+      <persistence-unit moduleName="CatalogService" name="Default">
+        <packages>
+          <package value="com.peolly.catalogservice" />
+        </packages>
+      </persistence-unit>
+      <persistence-unit moduleName="PricingService" name="Default">
+        <packages>
+          <package value="com.peolly.pricingservice" />
+        </packages>
+      </persistence-unit>
+      <persistence-unit moduleName="StorageService" name="Default">
+        <packages>
+          <package value="com.peolly.storageservice" />
+        </packages>
+      </persistence-unit>
     </persistence-units>
   </component>
 </project>

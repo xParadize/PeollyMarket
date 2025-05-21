@@ -29,8 +29,8 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/profile")
-@Tag(name = "Profile")
+@RequestMapping("/api/v1/profile")
+@Tag(name = "Profile controller")
 public class ProfileController {
     private final UserService usersService;
     private final SecurityKafkaProducer securityKafkaProducer;
@@ -69,8 +69,8 @@ public class ProfileController {
 //        }
 //    }
 
-    @Operation(summary = "There user should add their payment method (card data)")
-    @PostMapping("/add-payment-method")
+    @Operation(summary = "Add payment method")
+    @PostMapping("/payment-methods")
     public ResponseEntity<ApiResponse> addPaymentMethod(@RequestBody @Valid CardData cardData,
                                                         BindingResult bindingResult,
                                                         Principal actualUser) {

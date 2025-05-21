@@ -81,15 +81,15 @@ public class UserService {
 
     @Transactional
     @Deprecated
-    public void updateUserRole(String requestedRole, boolean isAdding) {
-        var user = getCurrentUser();
-        var userRole = convertStringToUserRole(requestedRole);
+    public void updateUserRole(UUID userId, String role, boolean isAdd) {
+        User user = findById(userId);
+        var userRole = convertStringToUserRole(role);
 
-        if (!doesUserRoleExist(requestedRole)) {
+        if (!doesUserRoleExist(role)) {
             throw new IncorrectRoleInput();
         }
 
-        if (isAdding) {
+        if (isAdd) {
             if (user.getRoles().contains(userRole)) {
                 throw new RepeatedRoleException();
             }

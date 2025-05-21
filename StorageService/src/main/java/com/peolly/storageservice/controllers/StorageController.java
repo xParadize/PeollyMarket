@@ -3,34 +3,45 @@ package com.peolly.storageservice.controllers;
 import com.peolly.storageservice.dto.ApiResponse;
 import com.peolly.storageservice.dto.ItemDuplicateRequest;
 import com.peolly.storageservice.exceptions.EmptyProductStorageAmountException;
+import com.peolly.storageservice.exceptions.IncorrectSearchPath;
 import com.peolly.storageservice.external.ReserveItemsRequest;
 import com.peolly.storageservice.models.Item;
 import com.peolly.storageservice.services.ReservedItemService;
 import com.peolly.storageservice.services.StorageService;
+import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/storage")
+@Tag(name = "Storage controller")
 @RequiredArgsConstructor
 public class StorageController {
     private final StorageService storageService;
     private final ReservedItemService reservedItemService;
 
-    @PostMapping("/check-duplicate")
+    @Hidden
+    @RequestMapping(value = "/**")
+    public ResponseEntity<ApiResponse> handleNotFound() {
+        throw new IncorrectSearchPath();
+    }
+
+    @Operation(summary = "Check if an item already exists")
+    @PostMapping("/items/check-duplicate")
     public ResponseEntity<Boolean> isDuplicate(@RequestBody ItemDuplicateRequest request) {
         boolean isDuplicate = storageService.isDuplicate(request.name(), request.description());
         return ResponseEntity.ok(isDuplicate);
     }
 
-    @PostMapping("/get-quantity")
-    public ResponseEntity<?> getQuantity(@RequestBody Long itemId) {
+    @Operation(summary = "Get the quantity of goods in stock")
+    @GetMapping("/items/{id}/quantity")
+    public ResponseEntity<?> getQuantity(@PathVariable("id") Long itemId) {
         Item item = storageService.findItemById(itemId);
         if (item == null || item.getQuantity() == 0) {
             return new ResponseEntity<>(new ApiResponse(false, "Item not found or is out of the stock."), HttpStatus.NOT_FOUND);
@@ -38,7 +49,8 @@ public class StorageController {
         return ResponseEntity.ok(item.getQuantity());
     }
 
-    @PostMapping("/check-availability")
+    @Operation(summary = "Check if all the requested items are in stock")
+    @PostMapping("/items/check-stock")
     public ResponseEntity<Boolean> isAvailable(@RequestBody(required = false) Map<Long, Integer> itemAvailabilityRequest) {
         if (itemAvailabilityRequest == null || itemAvailabilityRequest.isEmpty()) {
             return ResponseEntity.badRequest().body(false);
@@ -47,8 +59,8 @@ public class StorageController {
         return isAvailable ? ResponseEntity.ok(true) : ResponseEntity.status(HttpStatus.NOT_FOUND).body(false);
     }
 
-
-    @PostMapping("/reserve-item")
+    @Operation(summary = "Reserve items in stock")
+    @PostMapping("reservations")
     public ResponseEntity<?> reserveItem(@RequestBody ReserveItemsRequest reserveItemsRequest) {
         try {
             storageService.reserveItemsInStorage(reserveItemsRequest.itemIds(), reserveItemsRequest.userId());
@@ -58,7 +70,8 @@ public class StorageController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @DeleteMapping("/reserve-item")
+    @Operation(summary = "Remove items from reservation")
+    @DeleteMapping("/reservations")
     public ResponseEntity<?> deleteReserveItem(@RequestBody ReserveItemsRequest reserveItemsRequest) {
         try {
             reservedItemService.deleteReservedItemsFromStorage(reserveItemsRequest.itemIds(), reserveItemsRequest.userId());

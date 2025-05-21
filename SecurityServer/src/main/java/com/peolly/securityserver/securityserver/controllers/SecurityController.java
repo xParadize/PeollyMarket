@@ -21,12 +21,13 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/auth")
-@Tag(name = "Authentication")
+@RequestMapping("/api/v1/auth")
+@Tag(name = "Security controller")
 public class SecurityController {
 
     private final AuthenticationService authenticationService;
@@ -38,7 +39,7 @@ public class SecurityController {
         throw new IncorrectSearchPath();
     }
 
-    @Operation(summary = "User registration")
+    @Operation(summary = "Register user")
     @PostMapping("/sign-up")
     public ResponseEntity<ApiResponse> signUp(@RequestBody @Valid SignUpRequest request, BindingResult bindingResult) {
         if (bindingResult.hasFieldErrors()) {
@@ -58,7 +59,7 @@ public class SecurityController {
         }
     }
 
-    @Operation(summary = "User authentication")
+    @Operation(summary = "Authenticate user")
     @PostMapping("/sign-in")
     public ResponseEntity<?> signIn(@RequestBody @Valid SignInRequest request, BindingResult bindingResult) {
         if (bindingResult.hasFieldErrors()) {
@@ -74,7 +75,7 @@ public class SecurityController {
         }
     }
 
-    @Operation(summary = "User authentication")
+    @Operation(summary = "Update refresh token and get a new one")
     @PostMapping("/refresh-token")
     public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenRequest request) {
         try {
@@ -85,15 +86,17 @@ public class SecurityController {
         }
     }
 
-    @GetMapping("/confirm-email/{confirmation_code}")
-    public ResponseEntity<?> confirmEmail(@PathVariable("confirmation_code") String uuid) {
-        String authResponse = authenticationService.confirmEmailToken(uuid);
+    @Operation(summary = "Confirm account registration with a code from the mail")
+    @GetMapping("/confirm-email/{code}")
+    public ResponseEntity<?> confirmEmail(@PathVariable("code") String code) {
+        String authResponse = authenticationService.confirmEmailToken(code);
         return ResponseEntity.ok(new ApiResponse(true, authResponse));
     }
 
-    @PatchMapping("/update-role")
-    public ResponseEntity<ApiResponse> updateUserRole(@RequestBody RoleUpdateRequest roleUpdateRequest) {
-        userService.updateUserRole(roleUpdateRequest.role(), roleUpdateRequest.add());
+    @Operation(summary = "Add or remove user role")
+    @PatchMapping("/users/{id}/role")
+    public ResponseEntity<ApiResponse> updateUserRole(@PathVariable("id") UUID userId, @RequestBody RoleUpdateRequest roleUpdateRequest) {
+        userService.updateUserRole(userId, roleUpdateRequest.role(), roleUpdateRequest.isAdd());
         return ResponseEntity.ok(new ApiResponse(true, "Role modified successfully"));
     }
 
