@@ -190,6 +190,14 @@ public class CartService {
         }
     }
 
+    @Transactional
+    public void deleteCart(UUID userId) {
+        String key = CART_CACHE_KEY + userId;
+        Jedis jedis = new Jedis(redisHost, redisPort);
+        jedis.del(key);
+        jedis.close();
+    }
+
     @Transactional(readOnly = true)
     public Map<Long, Integer> getCartItemQuantities(UUID userId) {
         CartDto cartDto = listCartItems(userId);
@@ -223,14 +231,25 @@ public class CartService {
     }
 
     @Transactional
-    public void processOrder(PerformPaymentDto performPaymentDto, UUID userId, String email) throws DocumentException {
+    public void processOrder(PerformPaymentDto paymentData, UUID userId, String email) throws DocumentException {
+        checkItemsAvailability(userId);
+        List<PricesRefreshResponse> updatedPrices = getUpdatedPrices(userId);
+        CartDto updatedCart = getUpdatedCart(userId, updatedPrices);
+        Long futureOrderId = saveOrder(paymentData, userId, updatedCart);
+        List<Long> itemsIdToReserve = reserveItems(userId, updatedCart);
+        processPayment(paymentData, userId, updatedCart, futureOrderId);
+        saveECheck(userId, email, updatedCart);
+        deleteCart(userId);
+        deleteReservedItems(userId, itemsIdToReserve);
 
+        orderService.finishOrder(futureOrderId, userId);
+    }
+
+    private void checkItemsAvailability(UUID userId) {
         // TODO: тут нужно проверить случай, когда во время заказа товар заканчивается => код должен выдать ошибку
         //  404. Клиент должен обновить страницу и подгрузить товары => получить новый список
         // Проверяем наличие товаров на складе
         Map<Long, Integer> cartItemsToCheckAvailability = getCartItemQuantities(userId);
-
-
         Boolean itemsAvailabilityCheckResult = restClient.post()
                 .uri("http://localhost:8031/api/v1/storage/check-availability")
                 .body(cartItemsToCheckAvailability)
@@ -248,12 +267,12 @@ public class CartService {
                     throw new GatewayTimeoutException("Gateway Time-out.");
                 }))
                 .body(Boolean.class);
+    }
 
-        // Получаем обновленные цены
-        List<PricesRefreshRequest> priceRequests = getCartItemsForPriceCheck(userId);
+    private List<PricesRefreshResponse> getUpdatedPrices(UUID userId) {
         List<PricesRefreshResponse> updatedPrices = restClient.post()
                 .uri("http://localhost:8032/api/v1/pricing/get-price")
-                .body(priceRequests)
+                .body(getCartItemsForPriceCheck(userId))
                 .retrieve()
                 .onStatus(HttpStatus.NOT_FOUND::equals, (request, response) -> {
                     throw new InsufficientStockException("Price not found.");
@@ -274,41 +293,47 @@ public class CartService {
                     throw new GatewayTimeoutException("Gateway Time-out.");
                 }))
                 .body(new ParameterizedTypeReference<>() {});
+        return updatedPrices;
+    }
 
-        // проходимся циклом по корзине и меняем цены на новые (если есть) => получаем список с товарами которые точно есть и свежими ценами
-        CartDto finalCartList = listCartItems(userId);
+    private CartDto getUpdatedCart(UUID userId, List<PricesRefreshResponse> updatedPrices) {
+        CartDto finalCart = listCartItems(userId);
 
-        for (OrderElement element : finalCartList.getCart().getOrderElements()) {
-            Long productId = element.getItemDto().id();
+        for (OrderElement itemToUpdate : finalCart.getCart().getOrderElements()) {
+            Long itemId = itemToUpdate.getItemDto().id();
 
             PricesRefreshResponse matchedPrice = updatedPrices.stream()
-                    .filter(resp -> Objects.equals(resp.itemId(), productId))
+                    .filter(resp -> Objects.equals(resp.itemId(), itemId))
                     .findFirst()
                     .orElse(null);
 
             if (matchedPrice != null) {
-                ItemDto oldProduct = element.getItemDto();
-                ItemDto updatedProduct = new ItemDto(
-                        oldProduct.id(),
-                        oldProduct.name(),
-                        oldProduct.description(),
-                        oldProduct.image(),
+                ItemDto oldItem = itemToUpdate.getItemDto();
+                ItemDto updatedItem = new ItemDto(
+                        oldItem.id(),
+                        oldItem.name(),
+                        oldItem.description(),
+                        oldItem.image(),
                         matchedPrice.updatedPrice(),
-                        oldProduct.inStockQuantity()
+                        oldItem.inStockQuantity()
                 );
-                element.setItemDto(updatedProduct);
+                itemToUpdate.setItemDto(updatedItem);
             }
         }
+        return finalCart;
+    }
 
-        // Создаем запись о заказе в таблице заказов (OrderMS)
-        Long futureOrderId = orderService.createOrder(
+    private Long saveOrder(PerformPaymentDto performPaymentDto, UUID userId, CartDto finalCart) {
+        Long orderId = orderService.createOrder(
                 userId,
-                finalCartList.getItemsCount(),
-                BigDecimal.valueOf(finalCartList.getTotalCost()),
+                finalCart.getItemsCount(),
+                BigDecimal.valueOf(finalCart.getTotalCost()),
                 performPaymentDto.cardNumber()
         );
+        return orderId;
+    }
 
-        // Резервируем товары на складе (OrderMS -> StorageMS)
+    private List<Long> reserveItems(UUID userId, CartDto finalCartList) {
         List<Long> itemsIdsToReserve = finalCartList.getCart().getOrderElements().stream()
                 .map(orderElement -> orderElement.getItemDto().id())
                 .toList();
@@ -330,8 +355,10 @@ public class CartService {
                     throw new GatewayTimeoutException("Gateway Time-out.");
                 }))
                 .toBodilessEntity();
+        return itemsIdsToReserve;
+    }
 
-        // Проводим валидацию карты + снимаем деньги, если нет ошибки (OrderMS -> PaymentMS)
+    private void processPayment(PerformPaymentDto performPaymentDto, UUID userId, CartDto finalCartList, Long futureOrderId) {
         PaymentRequestDto paymentRequestDto = new PaymentRequestDto(
                 performPaymentDto.cardNumber(),
                 userId,
@@ -356,8 +383,9 @@ public class CartService {
                     throw new GatewayTimeoutException("Gateway Time-out.");
                 }))
                 .toBodilessEntity();
+    }
 
-        // чек
+    private MultiValueMap<String, Object> generateECheck(UUID userId, String email, CartDto finalCartList) throws DocumentException {
         byte[] pdfData = eCheckGenerator.generateECheck(userId, finalCartList);
         String filename = eCheckGenerator.getECheckName();
 
@@ -372,6 +400,11 @@ public class CartService {
         parts.add("file", pdfResource);
         parts.add("email", email);
         parts.add("fileCategory", FileCategory.ECHECK.name());
+        return parts;
+    }
+
+    private void saveECheck(UUID userId, String email, CartDto finalCartList) throws DocumentException {
+        MultiValueMap<String, Object> parts = generateECheck(userId, email, finalCartList);
 
         restClient.post()
                 .uri("http://localhost:8010/s3/upload")
@@ -391,14 +424,9 @@ public class CartService {
                     throw new GatewayTimeoutException("Gateway Time-out.");
                 }))
                 .toBodilessEntity();
+    }
 
-        // Удаляем заказ (OrderMS -> Redis)
-        String key = CART_CACHE_KEY + userId;
-        Jedis jedis = new Jedis(redisHost, redisPort);
-        jedis.del(key);
-        jedis.close();
-
-        // Удаляем резервы товаров
+    private void deleteReservedItems(UUID userId, List<Long> itemsIdsToReserve) {
         restClient.method(HttpMethod.DELETE)
                 .uri("http://localhost:8031/api/v1/storage/reserve-item")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -417,8 +445,5 @@ public class CartService {
                     throw new GatewayTimeoutException("Gateway Time-out.");
                 }))
                 .toBodilessEntity();
-
-        // после оплаты должен статус стать "PAID" и дата оплаты актуальная
-        orderService.finishOrder(futureOrderId, userId);
     }
 }

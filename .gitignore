@@ -19,9 +19,9 @@ kafka_logs/**
 ### STS ###
 .apt_generated
 .classpath
+.settings
 .factorypath
 .project
-.settings
 .springBeans
 .sts4-cache
 
