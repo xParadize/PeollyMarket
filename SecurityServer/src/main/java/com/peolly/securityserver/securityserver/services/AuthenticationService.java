@@ -8,6 +8,11 @@ import com.peolly.securityserver.usermicroservice.enums.UserRole;
 import com.peolly.securityserver.usermicroservice.model.User;
 import com.peolly.securityserver.usermicroservice.services.AuthDeviceInfoService;
 import com.peolly.securityserver.usermicroservice.services.UserService;
+import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +40,17 @@ public class AuthenticationService {
     private final NameGenerator nameGenerator;
     private final AuthDeviceInfoService authDeviceInfoService;
     private final SecurityKafkaProducer securityKafkaProducer;
+
+    private final MeterRegistry meterRegistry;
+    private AtomicInteger signIns;
+
+    @PostConstruct
+    private void initMetrics() {
+        this.signIns = new AtomicInteger(0);
+        signIns = meterRegistry.gauge("sign_ins_total",
+                Tags.of("type", "success"),
+                signIns);
+    }
 
     public void createTempUser(SignUpRequest request) {
         var tempUser = TemporaryUser.builder()
@@ -63,11 +80,7 @@ public class AuthenticationService {
                 .token(refreshToken)
                 .build();
 
-
         refreshTokenService.saveRefreshToken(refreshTokenToSave);
-
-        // notificationService.sendNotification(userToSave, NotificationType.REGISTRATION_NOTIFICATION);
-
         return response;
     }
 
@@ -88,6 +101,7 @@ public class AuthenticationService {
      * @param request данные пользователя
      * @return токен
      */
+    @Timed
     public JwtAuthenticationResponse signIn(SignInRequest request) {
         Authentication authentication = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
@@ -97,6 +111,8 @@ public class AuthenticationService {
         User tempUser = userService.findByUsername(request.getUsername());
         RefreshToken userRefreshToken = refreshTokenService.findRefreshTokenByUserId(tempUser.getId());
         var refreshToken = userRefreshToken.getToken();
+
+        signIns.incrementAndGet();
 
         JwtAuthenticationResponse response = JwtAuthenticationResponse.builder()
                 .accessToken(jwt)

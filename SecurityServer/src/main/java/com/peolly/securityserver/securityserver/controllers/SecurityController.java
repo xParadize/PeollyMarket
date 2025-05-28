@@ -10,6 +10,7 @@ import com.peolly.securityserver.securityserver.services.AuthenticationService;
 import com.peolly.securityserver.usermicroservice.dto.ApiResponse;
 import com.peolly.securityserver.usermicroservice.dto.RoleUpdateRequest;
 import com.peolly.securityserver.usermicroservice.services.UserService;
+import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -60,6 +61,7 @@ public class SecurityController {
     }
 
     @Operation(summary = "Authenticate user")
+    @Timed
     @PostMapping("/sign-in")
     public ResponseEntity<?> signIn(@RequestBody @Valid SignInRequest request, BindingResult bindingResult) {
         if (bindingResult.hasFieldErrors()) {

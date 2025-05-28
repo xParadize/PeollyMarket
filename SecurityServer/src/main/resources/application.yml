@@ -32,10 +32,14 @@ security:
     secret: ${JWT_SECRET}
     expirationMs: 604800000 # 1 week
 
-#eureka:
-#  client:
-#    service-url:
-#      defaultZone: http://localhost:8761/eureka
-#    fetch-registry: true
-#    register-with-eureka: true
+management:
+  endpoints.web.exposure.include: 'prometheus, health, info'
+  metrics:
+    distribution:
+      percentiles-histogram:
+        "[http.server.requests]": true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
 

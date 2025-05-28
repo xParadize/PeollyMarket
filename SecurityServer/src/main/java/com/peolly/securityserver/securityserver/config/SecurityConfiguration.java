@@ -45,6 +45,7 @@ public class SecurityConfiguration {
                 }))
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/*").permitAll()
+                        .requestMatchers("/actuator/*").permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/store/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-resources/*", "/v3/api-docs/**").permitAll()
@@ -54,7 +55,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/store/update-product/**").hasAnyRole("COMPANY_MANAGER", "ADMIN")
                         .requestMatchers("/company/**").hasAnyRole("COMPANY_MANAGER", "ADMIN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/**").hasRole("ADMIN")
+                        .requestMatchers("/api/**").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
