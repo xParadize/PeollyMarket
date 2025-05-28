@@ -19,6 +19,16 @@ spring:
       ddl-auto: update
     show-sql: false
 
+management:
+  endpoints.web.exposure.include: 'prometheus, health, info'
+  metrics:
+    distribution:
+      percentiles-histogram:
+        "[http.server.requests]": true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
 
 security:
   jwt:
