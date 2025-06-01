@@ -11,6 +11,8 @@ import com.peolly.securityserver.usermicroservice.dto.ApiResponse;
 import com.peolly.securityserver.usermicroservice.dto.RoleUpdateRequest;
 import com.peolly.securityserver.usermicroservice.services.UserService;
 import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,8 +32,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/v1/auth")
 @Tag(name = "Security controller")
 public class SecurityController {
-
     private final AuthenticationService authenticationService;
+    private final MeterRegistry meterRegistry;
     private final UserService userService;
 
     @Hidden
@@ -61,7 +63,6 @@ public class SecurityController {
     }
 
     @Operation(summary = "Authenticate user")
-    @Timed
     @PostMapping("/sign-in")
     public ResponseEntity<?> signIn(@RequestBody @Valid SignInRequest request, BindingResult bindingResult) {
         if (bindingResult.hasFieldErrors()) {
@@ -69,11 +70,20 @@ public class SecurityController {
             return new ResponseEntity<>(new ApiResponse(false, errors), HttpStatus.BAD_REQUEST);
         }
 
+        Timer.Sample sample = Timer.start(meterRegistry);
+
         try {
             var response = authenticationService.signIn(request);
             return ResponseEntity.ok(response);
         } catch (JwtTokenExpiredException e) {
             throw new JwtTokenExpiredException(e.getMessage());
+        } finally {
+            sample.stop(
+                    Timer.builder("auth.signin.duration")
+                            .description("Duration of user sign-in requests")
+                            .tag("endpoint", "/sign-in")
+                            .register(meterRegistry)
+            );
         }
     }
 
