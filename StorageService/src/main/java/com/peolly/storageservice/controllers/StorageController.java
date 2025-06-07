@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -32,12 +33,13 @@ public class StorageController {
         throw new IncorrectSearchPath();
     }
 
-    @Operation(summary = "Check if an item already exists")
+    @Operation(summary = "Check if an item(s) already exist(s)")
     @PostMapping("/items/check-duplicate")
-    public ResponseEntity<Boolean> isDuplicate(@RequestBody ItemDuplicateRequest request) {
-        boolean isDuplicate = storageService.isDuplicate(request.name(), request.description());
-        return ResponseEntity.ok(isDuplicate);
+    public ResponseEntity<List<Boolean>> isDuplicate(@RequestBody List<ItemDuplicateRequest> requests) {
+        List<Boolean> result = storageService.isDuplicate(requests);
+        return ResponseEntity.ok(result);
     }
+
 
     @Operation(summary = "Get the quantity of goods in stock")
     @GetMapping("/items/{id}/quantity")
@@ -60,7 +62,7 @@ public class StorageController {
     }
 
     @Operation(summary = "Reserve items in stock")
-    @PostMapping("reservations")
+    @PostMapping("/reservations")
     public ResponseEntity<?> reserveItem(@RequestBody ReserveItemsRequest reserveItemsRequest) {
         try {
             storageService.reserveItemsInStorage(reserveItemsRequest.itemIds(), reserveItemsRequest.userId());

@@ -16,10 +16,6 @@
       "type": "string"
     },
     {
-      "name": "companyId",
-      "type": "long"
-    },
-    {
       "name": "categoryId",
       "type": "long"
     },
@@ -33,11 +29,13 @@
     },
     {
       "name": "discount",
-      "type": "double"
+      "type": "double",
+      "default": 0.0
     },
     {
       "name": "quantity",
-      "type": "int"
+      "type": "int",
+      "default": 100
     },
     {
       "name": "email",

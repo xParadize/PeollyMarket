@@ -232,15 +232,25 @@ public class CartService {
 
     @Transactional
     public void processOrder(PerformPaymentDto paymentData, UUID userId, String email) throws DocumentException {
+        System.out.println(1);
         checkItemsAvailability(userId);
+        System.out.println(2);
         List<PricesRefreshResponse> updatedPrices = getUpdatedPrices(userId);
+        System.out.println(3);
         CartDto updatedCart = getUpdatedCart(userId, updatedPrices);
+        System.out.println(4);
         Long futureOrderId = saveOrder(paymentData, userId, updatedCart);
+        System.out.println(5);
         List<Long> itemsIdToReserve = reserveItems(userId, updatedCart);
+        System.out.println(6);
         processPayment(paymentData, userId, updatedCart, futureOrderId);
+        System.out.println(7);
         saveECheck(userId, email, updatedCart);
+        System.out.println(8);
         deleteCart(userId);
+        System.out.println(9);
         deleteReservedItems(userId, itemsIdToReserve);
+        System.out.println(10);
 
         orderService.finishOrder(futureOrderId, userId);
     }
@@ -250,8 +260,8 @@ public class CartService {
         //  404. Клиент должен обновить страницу и подгрузить товары => получить новый список
         // Проверяем наличие товаров на складе
         Map<Long, Integer> cartItemsToCheckAvailability = getCartItemQuantities(userId);
-        Boolean itemsAvailabilityCheckResult = restClient.post()
-                .uri("http://localhost:8031/api/v1/storage/check-availability")
+        restClient.post()
+                .uri("http://localhost:8031/api/v1/storage/items/check-stock")
                 .body(cartItemsToCheckAvailability)
                 .retrieve()
                 .onStatus(HttpStatus.NOT_FOUND::equals, ((request, response) -> {
@@ -271,7 +281,7 @@ public class CartService {
 
     private List<PricesRefreshResponse> getUpdatedPrices(UUID userId) {
         List<PricesRefreshResponse> updatedPrices = restClient.post()
-                .uri("http://localhost:8032/api/v1/pricing/get-price")
+                .uri("http://localhost:8032/api/v1/pricing/items/prices")
                 .body(getCartItemsForPriceCheck(userId))
                 .retrieve()
                 .onStatus(HttpStatus.NOT_FOUND::equals, (request, response) -> {
@@ -338,7 +348,7 @@ public class CartService {
                 .map(orderElement -> orderElement.getItemDto().id())
                 .toList();
         restClient.post()
-                .uri("http://localhost:8031/api/v1/storage/reserve-item")
+                .uri("http://localhost:8031/api/v1/storage/reservations")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(new ReserveItemsRequest(itemsIdsToReserve, userId))
                 .retrieve()
@@ -366,7 +376,7 @@ public class CartService {
                 futureOrderId
         );
         restClient.post()
-                .uri("http://localhost:8005/payment/api/v1/process-payment")
+                .uri("http://localhost:8005/api/v1/payments")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(paymentRequestDto)
                 .retrieve()
@@ -407,7 +417,7 @@ public class CartService {
         MultiValueMap<String, Object> parts = generateECheck(userId, email, finalCartList);
 
         restClient.post()
-                .uri("http://localhost:8010/s3/upload")
+                .uri("http://localhost:8010/api/v1/s3/files")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(parts)
                 .retrieve()
@@ -428,7 +438,7 @@ public class CartService {
 
     private void deleteReservedItems(UUID userId, List<Long> itemsIdsToReserve) {
         restClient.method(HttpMethod.DELETE)
-                .uri("http://localhost:8031/api/v1/storage/reserve-item")
+                .uri("http://localhost:8031/api/v1/storage/reservations")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(new ReserveItemsRequest(itemsIdsToReserve, userId))
                 .retrieve()

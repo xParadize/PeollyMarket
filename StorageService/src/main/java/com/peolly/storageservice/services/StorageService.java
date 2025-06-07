@@ -1,6 +1,7 @@
 package com.peolly.storageservice.services;
 
 import com.peolly.schemaregistry.CreateItemEvent;
+import com.peolly.storageservice.dto.ItemDuplicateRequest;
 import com.peolly.storageservice.exceptions.EmptyProductStorageAmountException;
 import com.peolly.storageservice.mappers.ItemMapper;
 import com.peolly.storageservice.models.Item;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,8 +29,11 @@ public class StorageService {
     }
 
     @Transactional(readOnly = true)
-    public boolean isDuplicate(String name, String description) {
-        return storageRepository.existsByNameAndDescription(name, description);
+    public List<Boolean> isDuplicate(List<ItemDuplicateRequest> requests) {
+        List<Boolean> duplicateCheckResult = requests.stream()
+                .map(i -> storageRepository.existsByNameAndDescription(i.name(), i.description()))
+                .toList();
+        return duplicateCheckResult;
     }
 
     @Transactional(readOnly = true)
@@ -66,6 +71,7 @@ public class StorageService {
     @KafkaListener(topics = "item-created", groupId = "org-deli-queuing-storage")
     public void consumeCreateItemEvent(CreateItemEvent event) {
          Item item = itemMapper.toEntity(event);
+         item.setCompanyId((long) 1);
          saveItem(item);
     }
 

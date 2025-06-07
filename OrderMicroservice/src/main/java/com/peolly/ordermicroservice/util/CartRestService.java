@@ -14,7 +14,7 @@ public class CartRestService {
 
     public ItemDto getItemInfo(Long itemId) {
         ItemDto itemDto = restClient.get()
-                .uri("http://localhost:8030/api/v1/catalog/item/{id}", itemId)
+                .uri("http://localhost:8030/api/v1/catalog/items/{id}", itemId)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
                     throw new ItemNotFoundException("Item not found.");

@@ -83,7 +83,6 @@ public class NotificationService {
         mailSenderService.sendRegistrationEmail(event.getEmail().toString(), event.getUsername().toString());
     }
 
-    @Transactional
     @KafkaListener(topics = "download-file-link", groupId = "org-deli-queuing-s3")
     public void consumeS3DownloadFileLinkEvent(ConsumerRecord<String, GenericRecord> message) {
         SpecificData specificData = configureSpecificData();

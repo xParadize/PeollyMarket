@@ -62,19 +62,20 @@
     </style>
 </head>
 <body>
-<div id="container">
-    <div id="header">
-        <h1>Your E-check</h1>
+    <div id="container">
+        <div id="header">
+            <h1>Your E-Check Is Ready</h1>
+        </div>
+        <p>We’ve successfully generated an e-check for your recent order.</p>
+        <p>You can access all your e-checks anytime in your personal account under the "<a href="#">E-Checks</a>" section.</p>
+        <br>
+        <p>With regards,<br>The Deli Team</p>
+        <p><a href="${uploadLink}" class="button">Download E-Check</a></p>
+        <div id="footer">
+            <p>Need help or have any questions? Our support team is here for you:</p>
+            <p class="support-email">support@deli.com</p>
+        </div>
     </div>
-    <p>An e-check has been generated for your orderElement.</p>
-    <p>All e-checks are stored in your personal account in the section "<a href="#">E-checks</a>".</p>
-    <br>
-    <p>Deli Team</p>
-    <p><a href="${uploadLink}" class="button">Download e-check</a></p>
-    <div id="footer">
-        <p>If you have any questions or need assistance, please contact our support team via email:</p>
-        <p class="support-email">support@deli.com</p>
-    </div>
-</div>
 </body>
+
 </html>

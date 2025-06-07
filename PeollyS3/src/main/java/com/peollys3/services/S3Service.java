@@ -53,11 +53,9 @@ public class S3Service {
             throw new FileUploadException("File upload failed: " + e.getMessage());
         }
 
-        // Сохраняем файл в S3 в отдельную папку по категории
         String s3Key = fileCategory.name().toLowerCase() + "/" + fileName;
         saveFileToS3(inputStream, s3Key);
 
-        // Генерируем ссылку и отправляем через Kafka
         String shareLink = generateShareLink(s3Key);
         s3KafkaProducer.sendDownloadLinkToEmail(shareLink, email, fileCategory);
     }

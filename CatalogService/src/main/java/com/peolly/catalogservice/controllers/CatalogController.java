@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Key;
 import java.util.stream.Collectors;
@@ -47,9 +48,9 @@ public class CatalogController {
 
     @Operation(summary = "Add one item")
     @PostMapping(value = "/items")
-    public ResponseEntity<ApiResponse> createProduct(@RequestHeader("Authorization") String authorizationHeader,
-                                                     @RequestBody @Valid CreateProductRequest createProductRequest,
-                                                     BindingResult bindingResult) {
+    public ResponseEntity<ApiResponse> createItem(@RequestHeader("Authorization") String authorizationHeader,
+                                                  @RequestBody @Valid CreateProductRequest createProductRequest,
+                                                  BindingResult bindingResult) {
         String jwt = authorizationHeader.replace("Bearer ", "");
         String creatorEmail = extractUserEmailFromJwt(jwt);
 
@@ -58,7 +59,7 @@ public class CatalogController {
             return new ResponseEntity<>(new ApiResponse(false, errors), HttpStatus.BAD_REQUEST);
         }
 
-        boolean isDuplicate = catalogService.isProductDuplicate(createProductRequest);
+        boolean isDuplicate = catalogService.isItemDuplicate(createProductRequest);
         if (isDuplicate) {
             return new ResponseEntity<>(new ApiResponse(false, "Product contains duplicate data. Please fix it and make request again."), HttpStatus.BAD_REQUEST);
         }
@@ -68,10 +69,20 @@ public class CatalogController {
     }
 
     @Operation(summary = "Add many items from .csv file")
-    @PostMapping(value = "/items")
-    public ResponseEntity<ApiResponse> createProducts() {
-        // TODO: вернуть метод из ProductService
-        return new ResponseEntity<>(new ApiResponse(true, "Product added. You will receive an email notification with more information."), HttpStatus.OK);
+    @PostMapping(value = "/items", consumes = "multipart/form-data")
+    public ResponseEntity<ApiResponse> createItems(@RequestPart(value = "file", required = false) MultipartFile file,
+                                                   @RequestParam(value = "email") String email) {
+
+        if (file == null && email == null) {
+            throw new IllegalArgumentException("Please provide a file and email for report.");
+        }
+
+        if (file == null || email == null) {
+            throw new IllegalArgumentException("Please provide a CSV file and email for report.");
+        }
+
+        catalogService.validateProducts(file, email);
+        return new ResponseEntity<>(new ApiResponse(true, "Items sent to validation."), HttpStatus.OK);
     }
 
     private String getFieldsErrors(BindingResult bindingResult) {
